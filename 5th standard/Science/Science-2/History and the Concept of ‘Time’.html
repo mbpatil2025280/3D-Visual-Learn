@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>History and Concept of Time - 3D Learning</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        background: black;
+        color: white;
+    }
+
+    #infoBox {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 350px;
+        padding: 15px;
+        background: rgba(0,0,0,0.7);
+        border-radius: 10px;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    #title {
+        position: absolute;
+        top: 20px;
+        width: 100%;
+        text-align: center;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    button {
+        position: absolute;
+        top: 70px;
+        left: 20px;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background: #00aaff;
+        color: white;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<div id="title">⏳ History and Concept of Time</div>
+<div id="infoBox">Loading...</div>
+<button onclick="startNarration()">🔊 Play Voice</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// Scene setup
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer({ antialias: true });
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Lighting
+let light = new THREE.PointLight(0xffffff, 2, 100);
+light.position.set(10,10,10);
+scene.add(light);
+
+let ambient = new THREE.AmbientLight(0x404040);
+scene.add(ambient);
+
+// Stars background
+let starGeometry = new THREE.BufferGeometry();
+let starVertices = [];
+for (let i = 0; i < 10000; i++) {
+    starVertices.push(
+        Math.random() * 2000 - 1000,
+        Math.random() * 2000 - 1000,
+        Math.random() * 2000 - 1000
+    );
+}
+starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+let starMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+let stars = new THREE.Points(starGeometry, starMaterial);
+scene.add(stars);
+
+// Earth (Real-world object)
+let earthTexture = new THREE.TextureLoader().load(
+'https://threejs.org/examples/textures/earth_atmos_2048.jpg'
+);
+
+let earth = new THREE.Mesh(
+    new THREE.SphereGeometry(3, 64, 64),
+    new THREE.MeshStandardMaterial({ map: earthTexture })
+);
+scene.add(earth);
+
+// Sun
+let sun = new THREE.Mesh(
+    new THREE.SphereGeometry(6, 64, 64),
+    new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+);
+sun.position.set(20,0,0);
+scene.add(sun);
+
+// Clock (Real-world style)
+let clockFace = new THREE.Mesh(
+    new THREE.CylinderGeometry(4,4,0.5,64),
+    new THREE.MeshStandardMaterial({ color: 0xffffff })
+);
+clockFace.rotation.x = Math.PI/2;
+clockFace.position.set(-10,0,0);
+scene.add(clockFace);
+
+// Clock hands
+let hourHand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3,2,0.2),
+    new THREE.MeshStandardMaterial({ color: 0x000000 })
+);
+hourHand.position.set(-10,1,0);
+scene.add(hourHand);
+
+let minuteHand = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2,3,0.2),
+    new THREE.MeshStandardMaterial({ color: 0x000000 })
+);
+minuteHand.position.set(-10,1.5,0);
+scene.add(minuteHand);
+
+// Camera position
+camera.position.z = 15;
+
+// Text info
+let info = document.getElementById("infoBox");
+
+let steps = [
+"Ancient humans observed the Sun and shadows to understand time.",
+"Day and night cycle was the first natural clock.",
+"Earth rotates → creates day and night.",
+"Earth revolves around the Sun → creates year.",
+"Mechanical clocks were invented to measure time precisely.",
+"Modern science defines time as a dimension.",
+"Time helps us understand past, present and future."
+];
+
+let stepIndex = 0;
+
+// Narration
+function speak(text) {
+    let speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 0.9;
+    speech.pitch = 1;
+    speech.volume = 1;
+    speechSynthesis.speak(speech);
+}
+
+function startNarration() {
+    speak(steps[stepIndex]);
+}
+
+// Animation loop
+let clockSpeed = 0.01;
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Earth rotation
+    earth.rotation.y += 0.002;
+
+    // Earth orbit
+    let time = Date.now() * 0.0005;
+    earth.position.x = Math.cos(time) * 10;
+    earth.position.z = Math.sin(time) * 10;
+
+    // Clock animation
+    hourHand.rotation.z -= clockSpeed * 0.1;
+    minuteHand.rotation.z -= clockSpeed;
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Change content every 5 seconds
+setInterval(() => {
+    stepIndex++;
+    if(stepIndex >= steps.length) stepIndex = 0;
+
+    info.innerHTML = steps[stepIndex];
+    speak(steps[stepIndex]);
+
+}, 5000);
+
+// Resize handling
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Initial text
+info.innerHTML = steps[0];
+
+</script>
+
+</body>
+</html>

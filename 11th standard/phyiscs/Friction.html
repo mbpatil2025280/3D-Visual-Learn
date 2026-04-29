@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Friction Physics Lab</title>
+    <style>
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #3b82f6; --text: #f8fafc; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .header { padding: 20px; text-align: center; border-bottom: 2px solid var(--panel); width: 100%; }
+        .main-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; width: 95%; }
+        canvas { background: var(--panel); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        .controls { background: var(--panel); padding: 25px; border-radius: 12px; width: 350px; display: flex; flex-direction: column; gap: 15px; }
+        .slider-group { display: flex; flex-direction: column; gap: 5px; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: var(--accent); }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; background: var(--accent); color: white; }
+        button:hover { filter: brightness(1.2); }
+        .stats-panel { margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; font-family: monospace; }
+        .val { color: #fbbf24; font-weight: bold; }
+        .label-red { color: #ef4444; } .label-blue { color: #3b82f6; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Friction & Applied Force Simulation</h1>
+    <p>Understand the transition from Static to Kinetic Friction</p>
+</div>
+
+<div class="main-container">
+    <canvas id="physicsCanvas"></canvas>
+
+    <div class="controls">
+        <h3>Experimental Settings</h3>
+        
+        <div class="slider-group">
+            <label>Applied Force: <span id="forceVal" class="val">0</span> N</label>
+            <input type="range" id="forceSlider" min="0" max="100" value="0">
+        </div>
+
+        <div class="slider-group">
+            <label>Mass of Block: <span id="massVal" class="val">5</span> kg</label>
+            <input type="range" id="massSlider" min="1" max="20" value="5">
+        </div>
+
+        <div class="slider-group">
+            <label>Static Friction (μs): <span id="musVal" class="val">0.5</span></label>
+            <input type="range" id="musSlider" min="0" max="1" step="0.05" value="0.5">
+        </div>
+
+        <div class="btn-group">
+            <button onclick="startLesson()">🔊 Play Audio Lesson</button>
+            <button style="background: #ef4444;" onclick="resetSim()">Reset</button>
+        </div>
+
+        <div class="stats-panel">
+            <div>Normal Force: <span id="normalForce" class="val">49</span> N</div>
+            <div>Max Static Friction: <span id="maxStatic" class="val">24.5</span> N</div>
+            <div id="status" style="margin-top:10px; color:#10b981; text-align:center;">STATUS: AT REST</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('physicsCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 700; canvas.height = 400;
+
+    // Simulation State
+    let state = {
+        posX: 150,
+        vel: 0,
+        acc: 0,
+        mass: 5,
+        appliedForce: 0,
+        muS: 0.5,
+        muK: 0.35,
+        g: 9.8,
+        isMoving: false
+    };
+
+    // UI Elements
+    const forceSlider = document.getElementById('forceSlider');
+    const massSlider = document.getElementById('massSlider');
+    const musSlider = document.getElementById('musSlider');
+
+    function updateUI() {
+        state.appliedForce = parseFloat(forceSlider.value);
+        state.mass = parseFloat(massSlider.value);
+        state.muS = parseFloat(musSlider.value);
+        state.muK = state.muS * 0.7; // Kinetic is usually lower
+
+        const normal = state.mass * state.g;
+        const maxStatic = state.muS * normal;
+
+        document.getElementById('forceVal').innerText = state.appliedForce;
+        document.getElementById('massVal').innerText = state.mass;
+        document.getElementById('musVal').innerText = state.muS;
+        document.getElementById('normalForce').innerText = normal.toFixed(1);
+        document.getElementById('maxStatic').innerText = maxStatic.toFixed(1);
+    }
+
+    function startLesson() {
+        const normal = state.mass * state.g;
+        const maxStatic = state.muS * normal;
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = `Currently, the maximum static friction is ${maxStatic.toFixed(1)} Newtons. 
+        If your applied force is less than this, the block will not move because friction 
+        will match your push exactly. Once you exceed this threshold, the block will break 
+        free and kinetic friction will take over.`;
+        window.speechSynthesis.speak(msg);
+    }
+
+    function resetSim() {
+        state.posX = 150;
+        state.vel = 0;
+        state.acc = 0;
+        state.isMoving = false;
+        forceSlider.value = 0;
+        updateUI();
+    }
+
+    function draw() {
+        updateUI();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const normal = state.mass * state.g;
+        const maxStatic = state.muS * normal;
+        const kineticFriction = state.muK * normal;
+
+        // Physics Logic
+        let frictionForce = 0;
+        if (!state.isMoving) {
+            if (state.appliedForce > maxStatic) {
+                state.isMoving = true;
+            } else {
+                frictionForce = state.appliedForce;
+                state.acc = 0;
+                state.vel = 0;
+                document.getElementById('status').innerText = "STATUS: AT REST";
+                document.getElementById('status').style.color = "#10b981";
+            }
+        }
+
+        if (state.isMoving) {
+            frictionForce = kineticFriction;
+            const netForce = state.appliedForce - frictionForce;
+            state.acc = netForce / state.mass;
+            state.vel += state.acc * 0.1;
+            state.posX += state.vel;
+            document.getElementById('status').innerText = "STATUS: SLIDING";
+            document.getElementById('status').style.color = "#ef4444";
+        }
+
+        // Environment
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(canvas.width, 300); ctx.stroke();
+
+        // The Block
+        const size = 40 + (state.mass * 2);
+        const bx = state.posX;
+        const by = 300 - size;
+        
+        ctx.fillStyle = "#3b82f6";
+        ctx.fillRect(bx, by, size, size);
+        ctx.strokeStyle = "white";
+        ctx.strokeRect(bx, by, size, size);
+
+        // Draw Forces
+        const arrowY = by + size/2;
+        
+        // Applied Force Arrow (Blue)
+        drawArrow(bx + size, arrowY, bx + size + state.appliedForce * 2, arrowY, "#3b82f6", "Applied Force");
+        // Friction Force Arrow (Red)
+        drawArrow(bx, arrowY, bx - frictionForce * 2, arrowY, "#ef4444", "Friction");
+
+        if (state.posX > canvas.width) state.posX = -size;
+
+        requestAnimationFrame(draw);
+    }
+
+    function drawArrow(fromx, fromy, tox, toy, color, label) {
+        if (Math.abs(tox - fromx) < 5) return;
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(fromx, fromy);
+        ctx.lineTo(tox, toy);
+        ctx.stroke();
+        
+        // Head
+        const headlen = 10;
+        const angle = Math.atan2(toy - fromy, tox - fromx);
+        ctx.beginPath();
+        ctx.moveTo(tox, toy);
+        ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.font = "12px Arial";
+        ctx.fillText(label, tox - 20, toy - 15);
+    }
+
+    draw();
+</script>
+</body>
+</html>

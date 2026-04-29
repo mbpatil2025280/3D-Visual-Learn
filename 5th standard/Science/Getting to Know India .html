@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Incredible India: 3D Educational Journey</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: flex-start; padding-left: 50px;
+            background: linear-gradient(to right, rgba(0,0,0,0.8), transparent);
+            color: white; pointer-events: none; z-index: 10;
+        }
+        .content-box { max-width: 500px; pointer-events: auto; }
+        h1 { font-size: 3.5rem; margin: 0; color: #FF9933; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        h2 { color: #138808; margin-top: -10px; letter-spacing: 5px; }
+        p { font-size: 1.1rem; line-height: 1.6; color: #ddd; }
+        button {
+            background: #ffffff; border: none; padding: 15px 40px;
+            font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            border-radius: 50px; transition: 0.3s; color: #000080;
+            box-shadow: 0 5px 15px rgba(255,153,51,0.4);
+        }
+        button:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(19,136,8,0.5); }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <div class="content-box">
+        <h1 id="title">Bharat</h1>
+        <h2>INDIA</h2>
+        <p id="desc">Discover the land of diversity, from the snow-capped Himalayas to the tropical backwaters. Click below to begin the audio-visual journey.</p>
+        <button onclick="startIndiaTour()">EXPLORE INDIA</button>
+    </div>
+</div>
+
+<div id="canvas-container"></div>
+
+<script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+    import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+
+    let scene, camera, renderer, controls, chakra, taj;
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xabcdef); // Bright Day Sky
+        
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(30, 20, 50);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambient);
+        const sun = new THREE.DirectionalLight(0xffffff, 1);
+        sun.position.set(10, 50, 10);
+        sun.castShadow = true;
+        scene.add(sun);
+
+        // The Ground (Green landscape)
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(200, 200),
+            new THREE.MeshStandardMaterial({ color: 0x228B22 })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // --- REAL WORLD OBJECT: TAJ MAHAL INSPIRED STRUCTURE ---
+        taj = new THREE.Group();
+        
+        // Main Base
+        const base = new THREE.Mesh(new THREE.BoxGeometry(15, 2, 15), new THREE.MeshStandardMaterial({color: 0xffffff}));
+        base.position.y = 1;
+        taj.add(base);
+
+        // Main Dome
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(4, 32, 32, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshStandardMaterial({color: 0xf0f0f0}));
+        dome.position.y = 6;
+        taj.add(dome);
+
+        // 4 Minarets (The Pillars)
+        const pillarGeo = new THREE.CylinderGeometry(0.5, 0.5, 10);
+        const positions = [[6,5,6], [-6,5,6], [6,5,-6], [-6,5,-6]];
+        positions.forEach(p => {
+            const pillar = new THREE.Mesh(pillarGeo, new THREE.MeshStandardMaterial({color: 0xffffff}));
+            pillar.position.set(p[0], p[1], p[2]);
+            taj.add(pillar);
+        });
+
+        scene.add(taj);
+
+        // --- REAL WORLD OBJECT: THE ASHOKA CHAKRA ---
+        chakra = new THREE.Group();
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(5, 0.2, 16, 100), new THREE.MeshStandardMaterial({color: 0x000080}));
+        chakra.add(ring);
+        
+        for(let i=0; i<24; i++) {
+            const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.1, 5, 0.1), new THREE.MeshStandardMaterial({color: 0x000080}));
+            spoke.rotation.z = (i * Math.PI * 2) / 24;
+            spoke.position.y = 0;
+            chakra.add(spoke);
+        }
+        chakra.position.set(0, 18, -10);
+        scene.add(chakra);
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.autoRotate = true;
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        chakra.rotation.z += 0.01; // Spin the wheel of time
+        taj.rotation.y += 0.002;
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    window.startIndiaTour = function() {
+        const text = "Namaste! Welcome to India. You are looking at a representation of the Taj Mahal, a symbol of eternal love and world-class architecture. India is a land of 1.4 billion people, 22 official languages, and a history that spans over 5,000 years. From the digital hubs of Bengaluru to the holy Ganges, India is moving fast into the future while honoring its deep roots.";
+        
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.rate = 0.95;
+        window.speechSynthesis.speak(speech);
+
+        // Interactive Camera Move
+        gsap.to(camera.position, { x: 0, y: 15, z: 25, duration: 3 });
+        document.getElementById('title').innerText = "Incredible India";
+        document.getElementById('desc').innerText = "India is the world's largest democracy and the fastest-growing major economy.";
+    };
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+
+</body>
+</html>

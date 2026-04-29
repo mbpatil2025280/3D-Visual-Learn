@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Position & Displacement Lab</title>
+    <style>
+        body { margin: 0; background: #0f172a; color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); margin: 20px; border: 1px solid #334155; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        .stats { display: flex; justify-content: space-around; background: #334155; padding: 15px; border-radius: 8px; width: 100%; font-family: monospace; }
+        .val { color: #3b82f6; font-weight: bold; font-size: 1.2rem; }
+        button { padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #3b82f6; color: white; margin: 10px; }
+    </style>
+</head>
+<body>
+    <div class="ui">
+        <h1>Position, Displacement & Velocity</h1>
+        <p>Drag the slider to move the runner. Watch how Distance keeps growing, but Displacement depends only on the start and end points.</p>
+        <input type="range" id="posSlider" min="-300" max="300" value="0" style="width: 80%;">
+        <div class="stats">
+            <div>Distance: <span id="dist" class="val">0</span>m</div>
+            <div>Displacement: <span id="disp" class="val">0</span>m</div>
+        </div>
+        <button onclick="playExplanation()">🔊 Explain the Difference</button>
+    </div>
+    <canvas id="kinematicsCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('kinematicsCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 200;
+
+    const slider = document.getElementById('posSlider');
+    let lastPos = 0;
+    let totalDistance = 0;
+    let initialPos = 0;
+
+    function playExplanation() {
+        const currentPos = parseInt(slider.value);
+        const displacement = currentPos - initialPos;
+        const msg = new SpeechSynthesisUtterance(
+            `Your current displacement is ${displacement} meters. Even if you moved back and forth many times, your displacement only cares about how far you are from the starting zero point. However, your total distance is ${totalDistance.toFixed(0)} meters, which counts every single step you took.`
+        );
+        window.speechSynthesis.speak(msg);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const currentPos = parseInt(slider.value);
+        const centerX = canvas.width / 2;
+        
+        // Track Distance
+        totalDistance += Math.abs(currentPos - lastPos);
+        lastPos = currentPos;
+
+        // UI Updates
+        document.getElementById('dist').innerText = totalDistance.toFixed(1);
+        document.getElementById('disp').innerText = currentPos;
+
+        // Draw Axis
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(50, 150); ctx.lineTo(750, 150); ctx.stroke();
+        
+        // Axis Markers
+        for(let i = -300; i <= 300; i += 100) {
+            let x = centerX + i;
+            ctx.fillText(i + "m", x - 10, 170);
+            ctx.fillRect(x, 145, 2, 10);
+        }
+
+        // Draw Runner (The Object)
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(centerX + currentPos, 130, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Displacement Vector (Arrow from 0 to current)
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(centerX, 100);
+        ctx.lineTo(centerX + currentPos, 100);
+        ctx.stroke();
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText("Displacement Vector", centerX + (currentPos/2) - 40, 90);
+
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>

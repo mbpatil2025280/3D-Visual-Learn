@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FBD Interactive Lab</title>
+    <style>
+        body { margin: 0; background: #0f172a; color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); margin: 20px; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        input[type=range] { width: 200px; cursor: pointer; }
+        button { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="ui">
+        <h1>Free Body Diagram Lab</h1>
+        <p>Adjust the angle to see how Normal Force and Friction change.</p>
+        <label>Incline Angle: <span id="angleVal">20</span>°</label><br>
+        <input type="range" id="angleSlider" min="0" max="60" value="20">
+        <br><br>
+        <button onclick="playExplanation()">🔊 Explain Force Resolution</button>
+    </div>
+    <canvas id="fbdCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('fbdCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 400;
+    const slider = document.getElementById('angleSlider');
+    const angleLabel = document.getElementById('angleVal');
+
+    function playExplanation() {
+        const angle = slider.value;
+        const msg = new SpeechSynthesisUtterance(`At an angle of ${angle} degrees, gravity still points straight down. However, the Normal force is tilted. We must split gravity into components: mg sine theta pulls the block down the ramp, while mg cosine theta presses it into the ramp.`);
+        window.speechSynthesis.speak(msg);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const angle = slider.value * Math.PI / 180;
+        angleLabel.innerText = slider.value;
+
+        const cx = 400, cy = 200;
+        
+        // Draw Incline
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(100, 350);
+        ctx.lineTo(700, 350 - 600 * Math.tan(angle));
+        ctx.stroke();
+
+        // Object (Simplified as a Dot/Small Square)
+        ctx.save();
+        ctx.translate(cx, cy - 50);
+        ctx.rotate(-angle);
+        
+        ctx.fillStyle = "#3b82f6";
+        ctx.fillRect(-25, -25, 50, 50);
+
+        // Vectors
+        drawVector(0, 0, 0, 100, "#ef4444", "Gravity (mg)", angle); // Gravity (Global Down)
+        drawVector(0, 0, 0, -80, "#22c55e", "Normal (N)", 0); // Normal (Local Up)
+        drawVector(0, 0, -60, 0, "#f59e0b", "Friction (f)", 0); // Friction (Local Left)
+
+        ctx.restore();
+        requestAnimationFrame(draw);
+    }
+
+    function drawVector(x, y, vx, vy, color, label, rotationCorrection) {
+        ctx.save();
+        ctx.rotate(rotationCorrection); // Adjust for gravity always pointing down
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + vx, y + vy);
+        ctx.stroke();
+        ctx.fillText(label, x + vx + 5, y + vy + 5);
+        ctx.restore();
+    }
+
+    draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Overview: Oscillation</title>
+    <style>
+        :root { --google-blue: #4285f4; --google-red: #ea4335; --google-green: #34a853; --ai-bg: #f8f9fa; }
+        body { margin: 0; font-family: 'Google Sans', Arial, sans-serif; background: #fff; color: #3c4043; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* AI Overview Header */
+        #ai-header { background: var(--ai-bg); padding: 20px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 15px; }
+        .ai-sparkle { color: var(--google-blue); font-size: 24px; }
+        .listen-btn { background: #e8f0fe; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; color: var(--google-blue); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        
+        #main-container { display: flex; flex: 1; overflow: hidden; }
+        #canvas-container { flex: 2; background: #000; position: relative; }
+        #text-content { flex: 1; padding: 30px; border-left: 1px solid #ddd; overflow-y: auto; line-height: 1.6; }
+
+        .highlight { color: var(--google-green); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="ai-header">
+        <span class="ai-sparkle">✦</span>
+        <h2 style="margin:0; font-size: 1.2rem;">AI Overview</h2>
+        <button class="listen-btn" onclick="speakExplanation()">
+            <span>🔊</span> Listen
+        </button>
+    </div>
+
+    <div id="main-container">
+        <div id="canvas-container">
+            </div>
+
+        <div id="text-content">
+            <h3>Understanding Oscillation</h3>
+            <p>Oscillation is a <b>repetitive back-and-forth motion</b> around a central point, known as the equilibrium position.</p>
+            <ul>
+                <li><span class="highlight">Amplitude:</span> The maximum distance from the center.</li>
+                <li><span class="highlight">Frequency:</span> How many cycles occur per second.</li>
+                <li><span class="highlight">Restoring Force:</span> The force that pulls the object back to the center.</li>
+            </ul>
+            <p>In this 3D model, the glowing sphere follows <b>Simple Harmonic Motion (SHM)</b>. Notice how it slows down at the peaks and moves fastest through the center.</p>
+        </div>
+    </div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        let scene, camera, renderer, ball, trail;
+        let points = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth*0.6 / window.innerHeight, 0.1, 1000);
+            camera.position.set(4, 2, 8);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth * 0.66, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Lighting
+            scene.add(new THREE.AmbientLight(0x404040));
+            const light = new THREE.PointLight(0x4285f4, 100, 50);
+            light.position.set(5, 5, 5);
+            scene.add(light);
+
+            // Objects
+            const geo = new THREE.SphereGeometry(0.5, 32, 32);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x4285f4, emissive: 0x111111 });
+            ball = new THREE.Mesh(geo, mat);
+            scene.add(ball);
+
+            // Grid
+            const grid = new THREE.GridHelper(20, 20, 0x333333, 0x222222);
+            scene.add(grid);
+            
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = performance.now() * 0.002;
+            
+            // Oscillation Math (Sine Wave)
+            ball.position.y = Math.sin(t) * 3;
+            ball.position.x = Math.cos(t * 0.5) * 1; // Slight figure-8 motion
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+
+        // Handle Resize
+        window.onresize = () => {
+            camera.aspect = (window.innerWidth * 0.66) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth * 0.66, window.innerHeight);
+        };
+    </script>
+
+    <script>
+        function speakExplanation() {
+            const text = "Oscillation is the repetitive variation, typically in time, of some measure about a central value. In this 3D simulation, you are observing Simple Harmonic Motion. The blue sphere moves back and forth around the equilibrium point. The distance it travels from the center is called the amplitude, and the speed of the repetition is the frequency.";
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9; // Slightly slower for better understanding
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>

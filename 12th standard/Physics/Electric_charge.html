@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Electric Charge Visualization</title>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: 'Arial', sans-serif; overflow: hidden; }
+        #ui { position: absolute; top: 20px; left: 20px; width: 280px; background: rgba(20, 20, 20, 0.9); padding: 20px; border-radius: 15px; border: 1px solid #333; z-index: 100; }
+        .slider-label { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9em; }
+        input[type=range] { width: 100%; margin-bottom: 20px; accent-color: #00fbff; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(45deg, #00fbff, #0072ff); color: white; font-weight: bold; cursor: pointer; }
+        #info-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 30px; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h2 style="margin-top:0; color:#00fbff;">Electric Charge</h2>
+        <div class="slider-label"><span>Magnitude (Q)</span> <span id="q-val">1.0</span></div>
+        <input type="range" id="charge-slider" min="-5" max="5" step="0.1" value="1">
+        
+        <button onclick="speakConcept()">🔊 Explain Charge Properties</button>
+        <p style="font-size: 0.8em; color: #aaa; margin-top: 15px;">
+            Drag to rotate view.<br>Change slider to switch from Positive to Negative.
+        </p>
+    </div>
+
+    <div id="info-box">
+        Field Lines: <span id="direction-text">Flowing Outward (Positive)</span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- 1. Scene Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.z = 10;
+
+        // --- 2. Create Charge Sphere ---
+        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        const material = new THREE.MeshPhongMaterial({ emissive: 0x00fbff, emissiveIntensity: 0.5 });
+        const chargeBody = new THREE.Mesh(geometry, material);
+        scene.add(chargeBody);
+
+        const pointLight = new THREE.PointLight(0xffffff, 2, 50);
+        scene.add(pointLight);
+
+        // --- 3. Field Line Particles ---
+        const particleCount = 500;
+        const particlesGeom = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = new Float32Array(particleCount * 3);
+
+        for(let i=0; i < particleCount * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 15;
+            velocities[i] = 0;
+        }
+
+        particlesGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particleMat = new THREE.PointsMaterial({ color: 0x00fbff, size: 0.05, transparent: true, opacity: 0.6 });
+        const particleSystem = new THREE.Points(particlesGeom, particleMat);
+        scene.add(particleSystem);
+
+        // --- 4. Logic & Interaction ---
+        const slider = document.getElementById('charge-slider');
+        let currentQ = 1.0;
+
+        function updatePhysics() {
+            currentQ = parseFloat(slider.value);
+            document.getElementById('q-val').innerText = currentQ.toFixed(1);
+            
+            // Color Logic: Red for Positive, Blue for Negative
+            if(currentQ > 0) {
+                chargeBody.material.emissive.setHex(0xff3333);
+                particleMat.color.setHex(0xff8888);
+                document.getElementById('direction-text').innerText = "Flowing Outward (Positive)";
+            } else if (currentQ < 0) {
+                chargeBody.material.emissive.setHex(0x3333ff);
+                particleMat.color.setHex(0x8888ff);
+                document.getElementById('direction-text').innerText = "Flowing Inward (Negative)";
+            } else {
+                chargeBody.material.emissive.setHex(0x555555);
+                document.getElementById('direction-text').innerText = "Neutral (No Field)";
+            }
+
+            const posArray = particlesGeom.attributes.position.array;
+            for(let i=0; i < particleCount; i++) {
+                let idx = i * 3;
+                let x = posArray[idx], y = posArray[idx+1], z = posArray[idx+2];
+                let dist = Math.sqrt(x*x + y*y + z*z);
+
+                // Movement Logic (Field direction)
+                let speed = (currentQ * 0.05) / (dist * 0.5); 
+                posArray[idx] += (x/dist) * speed;
+                posArray[idx+1] += (y/dist) * speed;
+                posArray[idx+2] += (z/dist) * speed;
+
+                // Reset particles when they go too far or get too close
+                if(dist > 8 || dist < 0.5) {
+                    posArray[idx] = (Math.random() - 0.5) * 10;
+                    posArray[idx+1] = (Math.random() - 0.5) * 10;
+                    posArray[idx+2] = (Math.random() - 0.5) * 10;
+                }
+            }
+            particlesGeom.attributes.position.needsUpdate = true;
+        }
+
+        function speakConcept() {
+            window.speechSynthesis.cancel();
+            const text = `Electric charge is the physical property of matter that causes it to experience a force in an electromagnetic field. 
+            There are two types: Positive and Negative. As you see in the animation, 
+            positive charges create field lines that point away from the center, while negative charges pull field lines toward them. 
+            Remember, unlike charges attract, and like charges repel. This is the foundation of all electricity!`;
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.rate = 1.1;
+            window.speechSynthesis.speak(speech);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePhysics();
+            chargeBody.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

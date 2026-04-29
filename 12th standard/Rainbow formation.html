@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rainbow Formation: A 3D Light Voyage</title>
+    <style>
+        body { margin: 0; background-color: #050505; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        #app-container {
+            display: flex;
+            height: 100vh;
+        }
+        #info-panel {
+            flex: 0 0 320px;
+            padding: 30px;
+            background: #0a0a0a;
+            border-right: 2px solid #222;
+            overflow-y: auto;
+            z-index: 10;
+        }
+        h1 { color: #ffeb3b; margin-top: 0; font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; }
+        .step { margin-bottom: 25px; display: none; } /* Steps hidden by default */
+        .step.active { display: block; }
+        h2 { color: #00ffcc; font-size: 1.2rem; margin-bottom: 10px; }
+        p { line-height: 1.6; color: #ccc; }
+        
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #rainbowCanvas {
+            box-shadow: 0 0 50px rgba(0, 255, 204, 0.2);
+        }
+
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        button {
+            padding: 15px 35px; font-size: 1.3rem; background: #00ffcc;
+            color: #050505; border: none; cursor: pointer; border-radius: 5px;
+            font-weight: bold; transition: 0.3s;
+        }
+        button:hover { background: #00cca3; transform: scale(1.05); }
+
+        #sound-controls {
+            position: absolute; bottom: 20px; right: 20px; z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-overlay">
+        <h1>Understanding Rainbow Formation</h1>
+        <p style="margin-bottom: 30px;">Click to Begin the Interactive Journey & Enable Sound</p>
+        <button onclick="startExperience()">START VOYAGE</button>
+    </div>
+
+    <div id="app-container">
+        <div id="info-panel">
+            <h1>The Journey of Light</h1>
+            
+            <div id="step1" class="step active">
+                <h2>1. The Inciting Ray</h2>
+                <p>A beam of pure, white sunlight travels from the Sun. White light may look simple, but it is actually composed of all the colors of the visible spectrum mixed together.</p>
+            </div>
+            <div id="step2" class="step">
+                <h2>2. Initial Refraction (Bending)</h2>
+                <p>The white light hits a water droplet. Water is denser than air, causing the light to slow down. Crucially, <b>different colors slow down by different amounts.</b> Short wavelengths (Violet) bend the most; long wavelengths (Red) bend the least.</p>
+            </div>
+            <div id="step3" class="step">
+                <h2>3. Total Internal Reflection</h2>
+                <p>The separated colors strike the back inner surface of the droplet. If the angle is just right, the light doesn't exit. Instead, it is reflected back inside the drop, like a mirror.</p>
+            </div>
+            <div id="step4" class="step">
+                <h2>4. Secondary Refraction</h2>
+                <p>The light reaches the front surface again and exits the droplet. It bends one last time, further spreading the colors apart. This wide spectrum is what travels towards your eyes!</p>
+            </div>
+            <div id="step5" class="step">
+                <h2>The Final Effect</h2>
+                <p>The droplet exits, sending a spectrum. Because thousands of droplets are doing this simultaneously, and each drop is at a unique angle relative to your eye, you perceive a beautiful, curved arc of colors.</p>
+            </div>
+
+            <p style="margin-top: 40px; color: #888; font-size: 0.9rem;">Interact with the canvas or use sound controls below.</p>
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="rainbowCanvas" width="800" height="600"></canvas>
+            <div id="sound-controls">
+                <button id="audio-toggle" onclick="toggleAudio()" style="padding: 10px 20px; font-size: 1rem;">Mute Sound</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Canvas & Core Setup ---
+        const canvas = document.getElementById('rainbowCanvas');
+        const ctx = canvas.getContext('2d');
+        const infoPanelSteps = document.querySelectorAll('#info-panel .step');
+        
+        let audioContext, oscillator, gainNode;
+        let audioEnabled = true;
+
+        // Simulation parameters
+        const dropletRadius = 180;
+        const dropletX = canvas.width / 2;
+        const dropletY = canvas.height / 2;
+        
+        // --- Lighting Parameters (Simple Ray Trace Logic) ---
+        const rayTraceInterval = 1500; // ms per step
+        let currentRayIndex = 0;
+
+        // Main entry function
+        function startExperience() {
+            document.getElementById('start-overlay').style.display = 'none';
+            initAudio();
+            startAnimationLoop();
+        }
+
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                oscillator = audioContext.createOscillator();
+                gainNode = audioContext.createGain();
+                
+                // Base sound setup (ambient)
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(150, audioContext.currentTime); // Low hum
+                gainNode.gain.setValueAtTime(0.02, audioContext.currentTime);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start();
+            } catch (e) { console.error("Web Audio API not supported", e); }
+        }
+
+        function playStepSound(stepIndex) {
+            if (!audioContext || !audioEnabled) return;
+
+            // Synthesis parameters change dynamically per step
+            const frequencies = [220, 440, 660, 880, 1100]; // Increasing pitch
+            const pitch = frequencies[stepIndex] || 440;
+            const now = audioContext.currentTime;
+
+            // Attack (quick swell)
+            gainNode.gain.cancelScheduledValues(now);
+            gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+            gainNode.gain.linearRampToValueAtTime(0.1, now + 0.1); // Bright swell
+            
+            // Release (fade back to ambient)
+            gainNode.gain.linearRampToValueAtTime(0.02, now + 1.2); 
+
+            // Shift pitch dynamically
+            oscillator.frequency.exponentialRampToValueAtTime(pitch, now + 0.1);
+        }
+
+        function toggleAudio() {
+            const btn = document.getElementById('audio-toggle');
+            audioEnabled = !audioEnabled;
+            if (audioEnabled) {
+                btn.innerText = "Mute Sound";
+                if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+            } else {
+                btn.innerText = "Unmute Sound";
+                if (audioContext && audioContext.state === 'running') audioContext.suspend();
+            }
+        }
+
+        function drawDroplet() {
+            ctx.beginPath();
+            ctx.arc(dropletX, dropletY, dropletRadius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(10, 30, 60, 0.4)'; // Dark water fill
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0, 255, 204, 0.3)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function drawRays(stepIndex) {
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+
+            const startX = 50;
+            const startY = 150;
+            const impactX = dropletX - dropletRadius; 
+
+            // Define light paths (Pre-calculated for simplicity)
+            // Path 1: White Light to droplet
+            if (stepIndex >= 0) {
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(impactX, dropletY);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.stroke();
+            }
+
+            // Path 2 & 3: Refraction and Reflection INSIDE the drop
+            // We'll calculate slightly different angles for red and violet
+            const colors = [
+                { name: 'Red', color: '#ff3333', refractionAngle: Math.PI * 0.13, exitOffsetY: -10 },
+                { name: 'Orange', color: '#ff9933', refractionAngle: Math.PI * 0.11, exitOffsetY: -5 },
+                { name: 'Yellow', color: '#ffeb3b', refractionAngle: Math.PI * 0.10, exitOffsetY: 0 },
+                { name: 'Green', color: '#33ff33', refractionAngle: Math.PI * 0.09, exitOffsetY: 5 },
+                { name: 'Blue', color: '#3399ff', refractionAngle: Math.PI * 0.08, exitOffsetY: 10 },
+                { name: 'Violet', color: '#cc33ff', refractionAngle: Math.PI * 0.07, exitOffsetY: 15 }
+            ];
+
+            if (stepIndex >= 1) {
+                colors.forEach(c => {
+                    const refractedAngle = c.refractionAngle;
+                    const internalX = dropletX + Math.cos(refractedAngle) * dropletRadius;
+                    const internalY = dropletY + Math.sin(refractedAngle) * dropletRadius;
+
+                    // Initial Refraction to Back
+                    ctx.beginPath();
+                    ctx.moveTo(impactX, dropletY);
+                    ctx.lineTo(internalX, internalY);
+                    ctx.strokeStyle = c.color;
+                    ctx.stroke();
+
+                    // Path 3: Total Internal Reflection
+                    if (stepIndex >= 2) {
+                        // Reflect off the back surface
+                        const reflectAngle = -refractedAngle; // Symmetrical reflection
+                        const exitX = dropletX - Math.cos(reflectAngle) * dropletRadius;
+                        const exitY = dropletY - Math.sin(reflectAngle) * dropletRadius;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(internalX, internalY);
+                        ctx.lineTo(exitX, exitY);
+                        ctx.stroke();
+
+                        // Path 4: Secondary Refraction and Exiting
+                        if (stepIndex >= 3) {
+                            const exitAngle = Math.PI * 0.25 + c.exitOffsetY / 50; // Final slight bend
+                            const finalX = exitX - Math.cos(exitAngle) * 300;
+                            const finalY = exitY - Math.sin(exitAngle) * 300;
+
+                            ctx.beginPath();
+                            ctx.moveTo(exitX, exitY);
+                            ctx.lineTo(finalX, finalY);
+                            ctx.stroke();
+                        }
+                    }
+                });
+            }
+
+            // Optional: The Full Spectrum at the end
+            if (stepIndex >= 4) {
+                // Final illustrative wide spectrum
+            }
+        }
+
+        function startAnimationLoop() {
+            const nextStep = () => {
+                // Draw Canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawDroplet();
+                drawRays(currentRayIndex);
+
+                // Update Info Panel Text
+                infoPanelSteps.forEach((s, idx) => {
+                    s.classList.remove('active');
+                    if (idx === currentRayIndex) s.classList.add('active');
+                });
+
+                // Play Spatial/Dynamic Sound
+                playStepSound(currentRayIndex);
+
+                currentRayIndex = (currentRayIndex + 1) % infoPanelSteps.length;
+            };
+
+            // Initial Draw
+            nextStep();
+            // Start the infinite ray trace cycle
+            setInterval(nextStep, rayTraceInterval);
+        }
+
+    </script>
+</body>
+</html>

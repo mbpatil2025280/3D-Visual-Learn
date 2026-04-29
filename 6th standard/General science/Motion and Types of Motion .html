@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motion – 6th General Science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --accent:#00f2fe; --accent2:#4facfe; --glass:rgba(255,255,255,0.05); --border:rgba(255,255,255,0.1); }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Outfit',sans-serif; background:radial-gradient(circle at top left,#0f172a,#020617); min-height:100vh; color:#e6f2f7; padding:40px 20px; }
+  .breadcrumb { text-align:center; font-size:0.9rem; color:rgba(255,255,255,0.4); margin-bottom:10px; }
+  .breadcrumb a { color:var(--accent); text-decoration:none; }
+  h1 { text-align:center; font-size:2.5rem; font-weight:700; background:linear-gradient(to right,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 12px rgba(0,242,254,0.4)); margin-bottom:40px; }
+  .content { max-width:860px; margin:0 auto; display:flex; flex-direction:column; gap:24px; }
+  .card { background:var(--glass); border:1px solid var(--border); border-radius:20px; padding:30px; backdrop-filter:blur(12px); animation:fadeUp 0.6s ease; }
+  .card h2 { font-size:1.3rem; color:var(--accent); margin-bottom:12px; }
+  .card p, .card li { font-size:1rem; line-height:1.8; color:rgba(255,255,255,0.75); }
+  .card ul { padding-left:20px; }
+  .fact-box { background:rgba(0,242,254,0.05); border-left:4px solid var(--accent); border-radius:10px; padding:16px 20px; margin-top:16px; font-size:0.95rem; color:rgba(255,255,255,0.6); }
+  .back-btn { display:inline-block; margin:40px auto 0; padding:12px 30px; background:linear-gradient(45deg,var(--accent2),var(--accent)); color:#020617; font-weight:700; border-radius:12px; text-decoration:none; font-size:1rem; transition:0.3s; }
+  .back-btn:hover { transform:translateY(-3px); box-shadow:0 10px 20px rgba(0,242,254,0.3); }
+  .center { text-align:center; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+<div class="breadcrumb"><a href="index.html">← General Science</a></div>
+<h1>🔄 Motion and Types of Motion</h1>
+<div class="content">
+  <div class="card">
+    <h2>What is Motion?</h2>
+    <p>An object is said to be in motion when it changes its position with time. Motion requires a reference point — a fixed point from which we measure the change in position.</p>
+    <div class="fact-box">💡 Everything in the universe is in motion — even the atoms inside a perfectly still rock!</div>
+  </div>
+  <div class="card">
+    <h2>Types of Motion</h2>
+    <ul>
+      <li><strong>Linear Motion:</strong> Movement in a straight line. Example: a car on a straight road.</li>
+      <li><strong>Circular Motion:</strong> Movement in a circular path. Example: a fan blade, Earth around the Sun.</li>
+      <li><strong>Oscillatory Motion:</strong> Back and forth movement. Example: a pendulum, a swing.</li>
+      <li><strong>Random Motion:</strong> Irregular, unpredictable movement. Example: a butterfly flying.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Speed and Distance</h2>
+    <ul>
+      <li><strong>Distance:</strong> How far an object has moved.</li>
+      <li><strong>Speed = Distance ÷ Time</strong></li>
+      <li>Example: A car covers 100 km in 2 hours → Speed = 50 km/h.</li>
+    </ul>
+  </div>
+</div>
+<div class="center"><a class="back-btn" href="index.html">← Back to Lessons</a></div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Capacitance & Electric Fields</title>
+    <style>
+        :root { --accent: #3b82f6; --bg: #0f172a; }
+        body { margin: 0; background: var(--bg); color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #334155; }
+        .controls { margin-top: 15px; display: flex; gap: 20px; align-items: center; background: #1e293b; padding: 15px; border-radius: 8px; }
+        button { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        input { cursor: pointer; accent-color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="ui">
+    <h1>Capacitor Simulation</h1>
+    <p>Increase the Voltage to see charge accumulate and the electric field strengthen.</p>
+    
+    <div class="controls">
+        <label>Voltage: <input type="range" id="voltRange" min="0" max="100" value="20"> <span id="vVal">20</span>V</label>
+        <button onclick="playLesson()">🔊 Explain Field</button>
+    </div>
+</div>
+
+<canvas id="capCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('capCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 400;
+
+    function playLesson() {
+        const v = document.getElementById('voltRange').value;
+        const msg = new SpeechSynthesisUtterance(`At ${v} volts, electrons are pushed onto the bottom plate, leaving the top plate positive. This creates an electric field between them. The closer the plates or the higher the voltage, the more energy we store.`);
+        window.speechSynthesis.speak(msg);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const v = parseInt(document.getElementById('voltRange').value);
+        document.getElementById('vVal').innerText = v;
+
+        // Draw Plates
+        ctx.fillStyle = "#64748b";
+        ctx.fillRect(200, 100, 400, 15); // Top Plate
+        ctx.fillRect(200, 285, 400, 15); // Bottom Plate
+
+        // Draw Electric Field Lines
+        const numLines = Math.floor(v / 5);
+        ctx.strokeStyle = `rgba(59, 130, 246, ${v/100})`;
+        ctx.lineWidth = 2;
+        for(let i=0; i<numLines; i++) {
+            let x = 220 + (i * (360/numLines));
+            ctx.beginPath();
+            ctx.moveTo(x, 115);
+            ctx.lineTo(x, 285);
+            ctx.stroke();
+            
+            // Arrow heads
+            ctx.fillStyle = ctx.strokeStyle;
+            ctx.beginPath();
+            ctx.moveTo(x, 200); ctx.lineTo(x-5, 190); ctx.lineTo(x+5, 190);
+            ctx.fill();
+        }
+
+        // Draw Charges
+        for(let i=0; i < v/2; i++) {
+            let x = 210 + Math.random() * 380;
+            ctx.fillStyle = "#ef4444"; // Positive
+            ctx.fillText("+", x, 95);
+            ctx.fillStyle = "#3b82f6"; // Negative
+            ctx.fillText("-", x, 315);
+        }
+
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>

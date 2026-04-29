@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Organs: The Busy Heart</title>
+    <style>
+        body { margin: 0; background-color: #050505; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        #info-overlay {
+            position: absolute; top: 20px; left: 20px; z-index: 10;
+            max-width: 300px; pointer-events: none;
+        }
+        h1 { color: #ff3e3e; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
+        .stat { font-family: monospace; color: #00ffcc; font-size: 1.2rem; margin-bottom: 20px; }
+        
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        button {
+            padding: 15px 30px; font-size: 1.2rem; background: #ff3e3e;
+            color: white; border: none; cursor: pointer; border-radius: 5px;
+            transition: 0.3s;
+        }
+        button:hover { background: #ff6666; transform: scale(1.05); }
+        
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>Internal Organs 3D</h1>
+        <p>Interactive Visual & Sound Experience</p>
+        <button onclick="startApp()">START EXPERIENCE</button>
+    </div>
+
+    <div id="info-overlay">
+        <h1>The Heart</h1>
+        <div class="stat" id="bpm-display">BPM: 72</div>
+        <p><b>Status:</b> Busy at Work</p>
+        <p id="desc">Pumping oxygenated blood to the rest of the body through a complex network of arteries.</p>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        let scene, camera, renderer, heart, heartGroup;
+        let clock = new THREE.Clock();
+
+        window.startApp = function() {
+            document.getElementById('start-screen').style.display = 'none';
+            init();
+            animate();
+            playHeartbeat();
+        };
+
+        function init() {
+            // 1. Scene Setup
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 4;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            // 2. Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 2); 
+            scene.add(ambientLight);
+            
+            const redLight = new THREE.PointLight(0xff0000, 5, 10);
+            redLight.position.set(2, 2, 2);
+            scene.add(redLight);
+
+            // 3. Create a Stylized "Heart" (Using an Octahedron for medical-tech look)
+            heartGroup = new THREE.Group();
+            const geometry = new THREE.OctahedronGeometry(1.5, 2);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0xcc0000, 
+                roughness: 0.2, 
+                metalness: 0.8,
+                wireframe: false 
+            });
+            
+            heart = new THREE.Mesh(geometry, material);
+            heartGroup.add(heart);
+
+            // Add a glowing "aura" wireframe
+            const wireframeGeo = new THREE.OctahedronGeometry(1.55, 2);
+            const wireframeMat = new THREE.MeshBasicMaterial({ color: 0xff3e3e, wireframe: true, transparent: true, opacity: 0.1 });
+            const aura = new THREE.Mesh(wireframeGeo, wireframeMat);
+            heartGroup.add(aura);
+
+            scene.add(heartGroup);
+
+            // 4. Background Grid for "Medical Lab" feel
+            const grid = new THREE.GridHelper(20, 20, 0xff0000, 0x222222);
+            grid.rotation.x = Math.PI / 2;
+            grid.position.z = -2;
+            scene.add(grid);
+        }
+
+        function playHeartbeat() {
+            // Synthetic Web Audio Heartbeat (No external file needed)
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            setInterval(() => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+                
+                // Visual feedback trigger
+                triggerPulse();
+            }, 833); // Roughly 72 BPM
+        }
+
+        function triggerPulse() {
+            // Briefly change UI text color to simulate a "beat"
+            const bpmText = document.getElementById('bpm-display');
+            bpmText.style.color = '#ffffff';
+            setTimeout(() => bpmText.style.color = '#00ffcc', 100);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+
+            // Pumping Animation (The "Busy" movement)
+            const pulse = 1 + Math.sin(t * 7.5) * 0.1; 
+            heartGroup.scale.set(pulse, pulse, pulse);
+
+            // Rotation
+            heartGroup.rotation.y += 0.01;
+            heartGroup.rotation.x += 0.005;
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

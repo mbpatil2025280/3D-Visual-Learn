@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Ohm's Law Interactive</title>
+    <style>
+        body { margin: 0; background: #050505; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #ui-panel { position: absolute; top: 20px; left: 20px; width: 300px; background: rgba(0, 0, 0, 0.85); padding: 20px; border-radius: 15px; border: 1px solid #ffcc00; z-index: 10; }
+        .slider-group { margin-bottom: 20px; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #ffcc00; }
+        .result { font-size: 1.2em; color: #ffcc00; font-weight: bold; background: #111; padding: 10px; border-radius: 8px; text-align: center; }
+        button { background: #ffcc00; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #e6b800; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h2 style="margin-top:0;">Ohm's Law Simulation</h2>
+        <div class="slider-group">
+            <label>Voltage (V): <span id="v-text">5</span> V</label>
+            <input type="range" id="v-slider" min="1" max="20" value="5">
+        </div>
+        <div class="slider-group">
+            <label>Resistance (R): <span id="r-text">5</span> Ω</label>
+            <input type="range" id="r-slider" min="1" max="20" value="5">
+        </div>
+        <div class="result">
+            Current (I) = <span id="i-text">1.00</span> A
+        </div>
+        <button onclick="speakLesson()">🔊 Play Voice Lesson</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- 1. Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.set(0, 5, 15);
+        camera.lookAt(0, 0, 0);
+
+        // --- 2. Create Circuit Path ---
+        const path = new THREE.TorusGeometry(6, 0.2, 16, 100);
+        const pathMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+        const wire = new THREE.Mesh(path, pathMat);
+        wire.rotation.x = Math.PI / 2;
+        scene.add(wire);
+
+        // Particles (Electrons)
+        const particleCount = 50;
+        const electrons = [];
+        const eGeo = new THREE.SphereGeometry(0.15, 8, 8);
+        const eMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+
+        for(let i=0; i<particleCount; i++) {
+            const electron = new THREE.Mesh(eGeo, eMat);
+            scene.add(electron);
+            electrons.push({
+                mesh: electron,
+                angle: (i / particleCount) * Math.PI * 2
+            });
+        }
+
+        // Light
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(0, 10, 0);
+        scene.add(light);
+
+        // --- 3. Logic ---
+        const vSlider = document.getElementById('v-slider');
+        const rSlider = document.getElementById('r-slider');
+
+        function update() {
+            const V = parseFloat(vSlider.value);
+            const R = parseFloat(rSlider.value);
+            const I = V / R;
+
+            document.getElementById('v-text').innerText = V;
+            document.getElementById('r-text').innerText = R;
+            document.getElementById('i-text').innerText = I.toFixed(2);
+
+            // Update electron speed and brightness
+            electrons.forEach((e, idx) => {
+                e.angle += I * 0.02; // Speed proportional to Current
+                e.mesh.position.x = Math.cos(e.angle) * 6;
+                e.mesh.position.z = Math.sin(e.angle) * 6;
+                e.mesh.scale.setScalar(0.5 + I/5); // Visually larger current
+            });
+
+            // Make the path glow slightly with voltage
+            pathMat.emissive = new THREE.Color(0xffcc00);
+            pathMat.emissiveIntensity = V / 40;
+        }
+
+        function speakLesson() {
+            window.speechSynthesis.cancel();
+            const I = (vSlider.value / rSlider.value).toFixed(2);
+            const text = `Ohm's Law shows the relationship between Voltage, Current, and Resistance. 
+            Currently, with ${vSlider.value} volts and ${rSlider.value} ohms of resistance, the current is ${I} amperes. 
+            Notice that if you increase the resistance, the electrons slow down because the path is harder to move through. 
+            If you increase the voltage, you give them more push, and they move faster!`;
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

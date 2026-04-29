@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Circular Motion Master</title>
+    <style>
+        body { margin: 0; background: #0f172a; color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-top: 20px; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; border-radius: 8px; border: none; background: #3b82f6; color: white; transition: 0.3s; }
+        button:hover { background: #2563eb; }
+        .legend { display: flex; justify-content: center; gap: 20px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="ui">
+        <h1>3D Circular Motion Visualization</h1>
+        <p>Click the button to hear the explanation while watching the forces in action.</p>
+        <button onclick="startLesson()">🔊 Play Audio Lesson</button>
+        <div class="legend">
+            <span style="color:#ef4444">■ Centripetal Force (Inward)</span>
+            <span style="color:#3b82f6">■ Velocity (Tangential)</span>
+        </div>
+    </div>
+    <canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 700; canvas.height = 400;
+
+    let angle = 0;
+    const orbitX = canvas.width / 2;
+    const orbitY = canvas.height / 2;
+    const radius = 120;
+
+    function startLesson() {
+        const speech = new SpeechSynthesisUtterance();
+        speech.text = "Look at the ball moving in a circle. The blue arrow is the velocity. It wants to go straight. But the red arrow, the centripetal force, pulls it constantly toward the center. This change in direction is why we say the object is accelerating, even if the speed stays the same. If the red arrow disappeared, the ball would fly away in the direction of the blue arrow.";
+        window.speechSynthesis.speak(speech);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 3D Perspective Orbit
+        ctx.beginPath();
+        ctx.ellipse(orbitX, orbitY, radius, radius * 0.6, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = '#334155';
+        ctx.stroke();
+
+        // Calculate 3D-ish coordinates
+        const x = orbitX + Math.cos(angle) * radius;
+        const y = orbitY + Math.sin(angle) * radius * 0.6;
+
+        // Centripetal Force (Red Arrow)
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(orbitX, orbitY);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Velocity Vector (Blue Arrow)
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - Math.sin(angle) * 60, y + Math.cos(angle) * 40);
+        ctx.strokeStyle = '#3b82f6';
+        ctx.stroke();
+
+        // Object
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fill();
+
+        angle += 0.03;
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>

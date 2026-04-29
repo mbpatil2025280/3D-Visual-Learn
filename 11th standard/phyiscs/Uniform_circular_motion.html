@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Uniform Circular Motion Lab</title>
+    <style>
+        :root { --accent: #f43f5e; --bg: #0f172a; }
+        body { margin: 0; background: var(--bg); color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 2px solid #334155; }
+        .controls { margin-top: 15px; display: flex; gap: 15px; }
+        button { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { filter: brightness(1.1); transform: scale(1.05); }
+        .legend { display: flex; gap: 20px; margin-top: 15px; font-weight: bold; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="ui">
+    <h1>Uniform Circular Motion Visualization</h1>
+    <p>Even at constant speed, the object accelerates because its direction changes. Watch the vectors!</p>
+    
+    <div class="controls">
+        <button onclick="playLesson()">🔊 Start Audio Lesson</button>
+    </div>
+
+    <div class="legend">
+        <span style="color: #3b82f6;">→ Velocity (Tangential)</span>
+        <span style="color: #f43f5e;">→ Acceleration (Centripetal)</span>
+    </div>
+</div>
+
+<canvas id="ucmCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('ucmCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 450;
+
+    let angle = 0;
+    const centerX = 400, centerY = 225, radius = 120;
+    const speed = 0.02;
+
+    function playLesson() {
+        const msg = new SpeechSynthesisUtterance("In uniform circular motion, the blue arrow shows velocity, which is always tangent to the circle. The red arrow is centripetal acceleration, always pointing toward the center. Because the blue arrow is constantly turning, the object is accelerating, even though its speed doesn't change.");
+        window.speechSynthesis.speak(msg);
+    }
+
+    function drawVector(x, y, vx, vy, color) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + vx, y + vy);
+        ctx.stroke();
+        
+        // Arrow head
+        const headlen = 10;
+        const a = Math.atan2(vy, vx);
+        ctx.beginPath();
+        ctx.moveTo(x + vx, y + vy);
+        ctx.lineTo(x + vx - headlen * Math.cos(a - Math.PI / 6), y + vy - headlen * Math.sin(a - Math.PI / 6));
+        ctx.lineTo(x + vx - headlen * Math.cos(a + Math.PI / 6), y + vy - headlen * Math.sin(a + Math.PI / 6));
+        ctx.fill();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Path
+        ctx.strokeStyle = '#334155';
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Calculate Position
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+
+        // Draw Acceleration Vector (Red - Toward Center)
+        const ax = -Math.cos(angle) * 80;
+        const ay = -Math.sin(angle) * 80;
+        drawVector(x, y, ax, ay, '#f43f5e');
+
+        // Draw Velocity Vector (Blue - Tangential)
+        const vx = -Math.sin(angle) * 80;
+        const vy = Math.cos(angle) * 80;
+        drawVector(x, y, vx, vy, '#3b82f6');
+
+        // Draw Object
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        angle += speed;
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+</script>
+</body>
+</html>

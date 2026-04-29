@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<title>भारताची भौगोलिक वैशिष्ट्ये - 3D Animation</title>
+<style>
+body{margin:0;overflow:hidden;background:#000;font-family:Arial}
+#info{
+  position:absolute;top:20px;left:20px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.1);
+  color:#fff;padding:25px;border-radius:20px;
+  width:380px;font-size:18px;line-height:1.5;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+  border-left: 5px solid #00f2fe;
+}
+</style>
+</head>
+<body>
+<div id="info">भारतीय उपखंड व भौगोलिक वैशिष्ट्ये - 3D अॅनिमेशन</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+camera.position.z=15;
+
+const light=new THREE.PointLight(0xffffff,2);
+light.position.set(10,10,10);
+scene.add(light);
+
+const info=document.getElementById("info");
+let objects=[];
+const loader=new THREE.TextureLoader();
+
+function speak(text){
+ let msg=new SpeechSynthesisUtterance(text);
+ msg.lang="mr-IN";
+ speechSynthesis.speak(msg);
+}
+
+function clearScene(){
+ objects.forEach(o=>scene.remove(o));
+ objects=[];
+}
+
+// 🏔️ हिमालय
+function showHimalaya(){
+ clearScene();
+ const texture=loader.load("https://upload.wikimedia.org/wikipedia/commons/3/3f/Himalayas.jpg");
+ const geo=new THREE.BoxGeometry(8,2,1);
+ const mat=new THREE.MeshStandardMaterial({map:texture});
+ const mountain=new THREE.Mesh(geo,mat);
+ mountain.position.y=2;
+ scene.add(mountain); objects.push(mountain);
+
+ info.innerHTML="🏔️ हिमालय : भारताच्या उत्तरेला अभेद्य पर्वतरांग.";
+ speak("हिमालय पर्वत भारताच्या उत्तरेला अभेद्य भिंत आहे.");
+}
+
+// 🌾 मैदाने
+function showPlains(){
+ clearScene();
+ const texture=loader.load("https://upload.wikimedia.org/wikipedia/commons/0/0f/Ganges_Plain.jpg");
+ const geo=new THREE.BoxGeometry(10,1,3);
+ const mat=new THREE.MeshStandardMaterial({map:texture});
+ const plains=new THREE.Mesh(geo,mat);
+ scene.add(plains); objects.push(plains);
+
+ info.innerHTML="🌾 सिंधू-गंगा-ब्रह्मपुत्रा मैदाने : सुपीक प्रदेश.";
+ speak("सिंधू गंगा ब्रह्मपुत्रा नद्यांचा प्रदेश अतिशय सुपीक आहे.");
+}
+
+// 🏜️ थर वाळवंट
+function showDesert(){
+ clearScene();
+ const texture=loader.load("https://upload.wikimedia.org/wikipedia/commons/c/cf/Thar_Desert.jpg");
+ const geo=new THREE.BoxGeometry(8,1,3);
+ const mat=new THREE.MeshStandardMaterial({map:texture});
+ const desert=new THREE.Mesh(geo,mat);
+ desert.position.x=-2;
+ scene.add(desert); objects.push(desert);
+
+ info.innerHTML="🏜️ थरचे वाळवंट : राजस्थान भागात वाळवंटी प्रदेश.";
+ speak("थरचे वाळवंट राजस्थान भागात पसरलेले आहे.");
+}
+
+// ⛰️ दख्खन पठार
+function showPlateau(){
+ clearScene();
+ const texture=loader.load("https://upload.wikimedia.org/wikipedia/commons/5/5e/Deccan_Plateau.jpg");
+ const geo=new THREE.CylinderGeometry(4,4,1,32);
+ const mat=new THREE.MeshStandardMaterial({map:texture});
+ const plateau=new THREE.Mesh(geo,mat);
+ plateau.rotation.x=Math.PI/2;
+ scene.add(plateau); objects.push(plateau);
+
+ info.innerHTML="⛰️ दख्खन पठार : भारताचा मोठा दक्षिणेकडील पठारी प्रदेश.";
+ speak("दख्खन पठार हा भारताचा दक्षिणेकडील पठारी प्रदेश आहे.");
+}
+
+// 🌊 समुद्रकिनारे
+function showCoast(){
+ clearScene();
+ const texture=loader.load("https://upload.wikimedia.org/wikipedia/commons/9/9a/Indian_Ocean.jpg");
+ const sea=new THREE.PlaneGeometry(12,6);
+ const mat=new THREE.MeshStandardMaterial({map:texture,side:THREE.DoubleSide});
+ const water=new THREE.Mesh(sea,mat);
+ water.rotation.x=-Math.PI/2;
+ scene.add(water); objects.push(water);
+
+ info.innerHTML="🌊 समुद्रकिनारे व बेटे : व्यापार आणि संपर्कासाठी महत्त्वाचे.";
+ speak("समुद्रकिनारे आणि बेटे प्राचीन व्यापारासाठी महत्त्वाची होती.");
+}
+
+// 🌏 भारतीय उपखंड
+function showSubcontinent(){
+ clearScene();
+ const texture=loader.load("https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg");
+ const geo=new THREE.SphereGeometry(4,32,32);
+ const mat=new THREE.MeshStandardMaterial({map:texture});
+ const globe=new THREE.Mesh(geo,mat);
+ scene.add(globe); objects.push(globe);
+
+ info.innerHTML="🌏 भारतीय उपखंड : भारत, पाकिस्तान, नेपाळ, भूतान, बांगलादेश, श्रीलंका.";
+ speak("भारत, पाकिस्तान, नेपाळ, भूतान, बांगलादेश आणि श्रीलंका मिळून भारतीय उपखंड तयार होतो.");
+}
+
+// टाइमलाइन
+setTimeout(showHimalaya,2000);
+setTimeout(showPlains,12000);
+setTimeout(showDesert,22000);
+setTimeout(showPlateau,32000);
+setTimeout(showCoast,42000);
+setTimeout(showSubcontinent,52000);
+
+function animate(){
+ requestAnimationFrame(animate);
+ renderer.render(scene,camera);
+}
+animate();
+
+window.addEventListener('resize',()=>{
+ camera.aspect=window.innerWidth/window.innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(window.innerWidth,window.innerHeight);
+});
+</script>
+</body>
+</html>

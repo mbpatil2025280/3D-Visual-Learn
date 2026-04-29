@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>What is History - 3D Learning</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    font-family: Arial;
+    color: white;
+}
+
+#title {
+    position: absolute;
+    top: 15px;
+    width: 100%;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+#info {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 360px;
+    padding: 15px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 10px;
+    line-height: 1.5;
+}
+
+button {
+    position: absolute;
+    top: 70px;
+    left: 20px;
+    padding: 10px;
+    background: #ff6600;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="title">📜 What is History? - 3D Learning</div>
+<div id="info">Loading...</div>
+<button onclick="playVoice()">🔊 Play Voice</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// Scene
+let scene = new THREE.Scene();
+
+// Camera
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 20;
+
+// Renderer
+let renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Lighting
+let light = new THREE.PointLight(0xffffff, 2, 200);
+light.position.set(20,20,20);
+scene.add(light);
+
+let ambient = new THREE.AmbientLight(0x404040, 2);
+scene.add(ambient);
+
+// Stars background
+let starsGeo = new THREE.BufferGeometry();
+let starVertices = [];
+for (let i = 0; i < 9000; i++) {
+    starVertices.push(
+        Math.random()*2000-1000,
+        Math.random()*2000-1000,
+        Math.random()*2000-1000
+    );
+}
+starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+let starsMat = new THREE.PointsMaterial({ color: 0xffffff });
+let stars = new THREE.Points(starsGeo, starsMat);
+scene.add(stars);
+
+// Earth (real-world feel)
+let earthTexture = new THREE.TextureLoader().load(
+'https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg'
+);
+
+let earth = new THREE.Mesh(
+    new THREE.SphereGeometry(5, 64, 64),
+    new THREE.MeshStandardMaterial({ map: earthTexture })
+);
+earth.position.set(8,0,0);
+scene.add(earth);
+
+// Ancient scroll (history representation)
+let scrollTexture = new THREE.TextureLoader().load(
+'https://threejs.org/examples/textures/uv_grid_opengl.jpg'
+);
+
+let scroll = new THREE.Mesh(
+    new THREE.CylinderGeometry(2,2,6,32),
+    new THREE.MeshStandardMaterial({ map: scrollTexture })
+);
+scroll.rotation.z = Math.PI/2;
+scroll.position.set(-8,0,0);
+scene.add(scroll);
+
+// Timeline path (curved line)
+let points = [];
+for (let i = 0; i < 50; i++) {
+    points.push(new THREE.Vector3(
+        -10 + i * 0.4,
+        Math.sin(i * 0.3) * 2,
+        0
+    ));
+}
+
+let timelineGeo = new THREE.BufferGeometry().setFromPoints(points);
+let timelineMat = new THREE.LineBasicMaterial({ color: 0xffcc00 });
+let timeline = new THREE.Line(timelineGeo, timelineMat);
+scene.add(timeline);
+
+// Floating markers (events)
+let markers = [];
+for (let i=0;i<6;i++){
+    let m = new THREE.Mesh(
+        new THREE.SphereGeometry(0.4,16,16),
+        new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    );
+    scene.add(m);
+    markers.push(m);
+}
+
+// Text content
+let info = document.getElementById("info");
+
+let steps = [
+"History is the study of past events.",
+"It helps us understand how people lived long ago.",
+"History includes kings, cultures, wars and inventions.",
+"It is recorded using books, monuments and stories.",
+"History connects the past with the present.",
+"It helps us learn from mistakes and achievements.",
+"History shapes our future decisions."
+];
+
+let index = 0;
+
+// Voice
+function speak(text){
+    let speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 0.9;
+    speech.pitch = 1;
+    speechSynthesis.speak(speech);
+}
+
+function playVoice(){
+    speak(steps[index]);
+}
+
+// Animation
+function animate(){
+    requestAnimationFrame(animate);
+
+    let t = Date.now()*0.0003;
+
+    // Earth rotation
+    earth.rotation.y += 0.002;
+
+    // Scroll rotation
+    scroll.rotation.x += 0.002;
+
+    // Markers moving along timeline
+    markers.forEach((m,i)=>{
+        m.position.x = -8 + i*3 + Math.sin(t+i);
+        m.position.y = Math.cos(t+i)*2;
+        m.position.z = Math.sin(t+i)*2;
+    });
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Change text
+setInterval(()=>{
+    index++;
+    if(index >= steps.length) index = 0;
+
+    info.innerHTML = steps[index];
+    speak(steps[index]);
+
+}, 6000);
+
+// Resize
+window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Init text
+info.innerHTML = steps[0];
+
+</script>
+
+</body>
+</html>

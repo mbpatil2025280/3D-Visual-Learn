@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D EM Spectrum Interactive</title>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #ui { position: absolute; top: 20px; left: 20px; width: 320px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 15px; border: 1px solid #ff00ff; z-index: 100; }
+        input[type=range] { width: 100%; accent-color: #ff00ff; cursor: pointer; }
+        .band-info { background: #111; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #ff00ff; }
+        button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 5px; background: #ff00ff; color: white; font-weight: bold; cursor: pointer; }
+        #label-3d { position: absolute; bottom: 50px; width: 100%; text-align: center; font-size: 2em; font-weight: bold; letter-spacing: 5px; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h2 style="margin:0;">EM Spectrum</h2>
+        <p style="font-size:0.8em; color:#aaa;">Slide to change Frequency (ν)</p>
+        <input type="range" id="freq-slider" min="0" max="6" step="1" value="0">
+        
+        <div class="band-info">
+            <strong id="band-name">Radio Waves</strong><br>
+            <span id="band-desc" style="font-size:0.9em; color:#ddd;">Used for long-distance communication.</span>
+        </div>
+        
+        <button onclick="speakSpectrum()">🔊 Listen to Teacher</button>
+    </div>
+
+    <div id="label-3d">WAVELENGTH (λ)</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        const bands = [
+            { name: "Radio", color: 0xff0000, freq: 0.5, desc: "Lowest frequency, longest wavelength. Used for TV and radio signals." },
+            { name: "Microwave", color: 0xffa500, freq: 1.5, desc: "Used for radar and cooking. Causes water molecules to vibrate." },
+            { name: "Infrared", color: 0xffff00, freq: 3.0, desc: "Felt as heat. Used in night vision and remote controls." },
+            { name: "Visible Light", color: 0x00ff00, freq: 5.0, desc: "The only part humans can see. From Red to Violet." },
+            { name: "Ultraviolet", color: 0x0000ff, freq: 8.0, desc: "Higher energy than light. Causes tanning and kills bacteria." },
+            { name: "X-Rays", color: 0x4b0082, freq: 12.0, desc: "High energy. Can pass through soft tissue to image bones." },
+            { name: "Gamma Rays", color: 0xee82ee, freq: 20.0, desc: "Highest energy. Produced by nuclear reactions and cosmic events." }
+        ];
+
+        // --- Three.js Scene ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.set(0, 5, 15);
+        camera.lookAt(0,0,0);
+
+        // --- Create Wave (Line) ---
+        const points = [];
+        for (let i = -15; i <= 15; i += 0.1) {
+            points.push(new THREE.Vector3(i, 0, 0));
+        }
+        const waveGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const waveMat = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
+        const waveLine = new THREE.Line(waveGeo, waveMat);
+        scene.add(waveLine);
+
+        // --- Logic ---
+        const slider = document.getElementById('freq-slider');
+        let time = 0;
+
+        function updateWave() {
+            const index = parseInt(slider.value);
+            const data = bands[index];
+            
+            document.getElementById('band-name').innerText = data.name;
+            document.getElementById('band-desc').innerText = data.desc;
+            waveLine.material.color.setHex(data.color);
+
+            const positions = waveLine.geometry.attributes.position.array;
+            time += 0.05;
+
+            for (let i = 0; i < positions.length; i += 3) {
+                const x = positions[i];
+                // Y = Amplitude * sin(Frequency * x - speed * time)
+                positions[i + 1] = Math.sin(x * (data.freq * 0.5) - time);
+            }
+            waveLine.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function speakSpectrum() {
+            window.speechSynthesis.cancel();
+            const data = bands[parseInt(slider.value)];
+            const text = `This is the ${data.name} band. ${data.desc} Notice how as the frequency increases, the wavelength gets shorter. This means the wave carries more energy.`;
+            const msg = new SpeechSynthesisUtterance(text);
+            window.speechSynthesis.speak(msg);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateWave();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+        window.onresize = () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+    </script>
+</body>
+</html>

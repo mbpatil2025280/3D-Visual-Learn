@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Echo Physics Lab</title>
+    <style>
+        body { margin: 0; background: #020617; color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #1e293b; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+        .panel { padding: 25px; text-align: center; max-width: 700px; }
+        button { background: #10b981; color: white; border: none; padding: 12px 28px; border-radius: 6px; font-weight: bold; cursor: pointer; margin: 10px; }
+        .stats { font-family: monospace; color: #10b981; font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h1>Echo & Sound Reflection</h1>
+        <p>Observe the wave traveling to the obstacle. The echo is the reflected wave.</p>
+        <button onclick="triggerEcho()">🔊 Play Sound & Narrator</button>
+        <div class="stats" id="distDisplay">Distance to Wall: 17.2m</div>
+    </div>
+    <canvas id="echoCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('echoCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 300;
+
+    let waveX = 50;
+    let isReflecting = false;
+    let waveAlpha = 1;
+
+    function triggerEcho() {
+        const msg = new SpeechSynthesisUtterance("An echo occurs when sound reflects off a surface. To hear it clearly, the sound must travel to the wall and back, taking at least point one seconds. This requires a distance of about seventeen meters.");
+        window.speechSynthesis.speak(msg);
+        waveX = 50;
+        isReflecting = false;
+        waveAlpha = 1;
+    }
+
+    function draw() {
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Wall
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(750, 50, 20, 200);
+
+        // Draw Source (Speaker)
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(50, 150, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Sound Wave
+        ctx.beginPath();
+        ctx.strokeStyle = isReflecting ? `rgba(244, 63, 94, ${waveAlpha})` : `rgba(16, 185, 129, ${waveAlpha})`;
+        ctx.lineWidth = 5;
+        for(let i=0; i<5; i++) {
+            let offset = i * 15;
+            ctx.moveTo(waveX - offset, 150 - (20 + offset));
+            ctx.quadraticCurveTo(waveX + 20 - offset, 150, waveX - offset, 150 + (20 + offset));
+        }
+        ctx.stroke();
+
+        if (!isReflecting) {
+            waveX += 4;
+            if (waveX >= 740) isReflecting = true;
+        } else {
+            waveX -= 4;
+            waveAlpha -= 0.005;
+            if (waveX <= 50) waveX = 50;
+        }
+
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>

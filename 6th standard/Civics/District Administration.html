@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<title>District Administration - 3D Animation</title>
+<style>
+body{margin:0;overflow:hidden;background:#0a0a0a;font-family:Arial}
+#info{
+ position:absolute;top:10px;left:10px;
+ background:rgba(0,0,0,0.7);
+ color:#fff;padding:15px;border-radius:10px;
+ width:330px;font-size:18px;line-height:1.4;
+}
+#title{
+ position:absolute;top:10px;right:10px;
+ color:#00eaff;font-size:22px;font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div id="info">जिल्हा प्रशासन: इमारतीवर क्लिक करा माहिती ऐकण्यासाठी 🎧</div>
+<div id="title">🏛️ District Administration 3D</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x101820);
+
+const camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+camera.position.set(0,8,20);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Lights
+const light=new THREE.PointLight(0xffffff,2);
+light.position.set(10,15,10);
+scene.add(light);
+
+const ambient=new THREE.AmbientLight(0xffffff,0.6);
+scene.add(ambient);
+
+// Ground
+const ground=new THREE.Mesh(
+ new THREE.PlaneGeometry(40,40),
+ new THREE.MeshStandardMaterial({color:0x1b5e20})
+);
+ground.rotation.x=-Math.PI/2;
+scene.add(ground);
+
+// Info + Speech
+const info=document.getElementById("info");
+function speak(text){
+ let msg=new SpeechSynthesisUtterance(text);
+ msg.lang="mr-IN";
+ speechSynthesis.speak(msg);
+}
+
+// Buildings
+const objects=[];
+
+function createBuilding(name,color,x,text,voice){
+ const geo=new THREE.BoxGeometry(4,3,4);
+ const mat=new THREE.MeshStandardMaterial({color:color});
+ const cube=new THREE.Mesh(geo,mat);
+ cube.position.set(x,1.5,0);
+ cube.userData={text,voice,name};
+ scene.add(cube);
+ objects.push(cube);
+
+ // Label
+ const canvas=document.createElement("canvas");
+ const ctx=canvas.getContext("2d");
+ canvas.width=256;canvas.height=64;
+ ctx.fillStyle="white";
+ ctx.font="20px Arial";
+ ctx.fillText(name,20,40);
+ const texture=new THREE.CanvasTexture(canvas);
+
+ const label=new THREE.Sprite(
+  new THREE.SpriteMaterial({map:texture})
+ );
+ label.scale.set(4,1,1);
+ label.position.set(x,4,0);
+ scene.add(label);
+}
+
+// Create Offices
+createBuilding(
+ "Collector Office",
+ 0x1976d2,-10,
+ "जिल्हाधिकारी: संपूर्ण जिल्ह्याचे प्रमुख प्रशासकीय अधिकारी.",
+ "जिल्हाधिकारी संपूर्ण जिल्ह्याचे प्रमुख प्रशासकीय अधिकारी असतात."
+);
+
+createBuilding(
+ "SP Office",
+ 0xd32f2f,-3,
+ "पोलीस अधीक्षक: जिल्ह्यातील कायदा व सुव्यवस्था सांभाळतात.",
+ "पोलीस अधीक्षक जिल्ह्यातील कायदा व सुव्यवस्था राखतात."
+);
+
+createBuilding(
+ "Zilla Parishad",
+ 0xfbc02d,4,
+ "जिल्हा परिषद: शिक्षण, आरोग्य व ग्रामीण विकासासाठी जबाबदार.",
+ "जिल्हा परिषद ग्रामीण विकास, शिक्षण आणि आरोग्य यासाठी काम करते."
+);
+
+createBuilding(
+ "District Court",
+ 0x6a1b9a,11,
+ "जिल्हा न्यायालय: न्यायव्यवस्थेचे मुख्य केंद्र.",
+ "जिल्हा न्यायालय जिल्ह्यातील न्याय देण्याचे मुख्य केंद्र आहे."
+);
+
+// Click interaction
+const raycaster=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+
+window.addEventListener("click",(event)=>{
+ mouse.x=(event.clientX/window.innerWidth)*2-1;
+ mouse.y=-(event.clientY/window.innerHeight)*2+1;
+ raycaster.setFromCamera(mouse,camera);
+ const intersects=raycaster.intersectObjects(objects);
+
+ if(intersects.length>0){
+  const obj=intersects[0].object;
+  info.innerHTML="🏢 "+obj.userData.name+"<br>"+obj.userData.text;
+  speak(obj.userData.voice);
+ }
+});
+
+// Animation loop
+function animate(){
+ requestAnimationFrame(animate);
+ scene.rotation.y+=0.002;
+ renderer.render(scene,camera);
+}
+animate();
+
+window.addEventListener('resize',()=>{
+ camera.aspect=window.innerWidth/window.innerHeight;
+ camera.updateProjectionMatrix();
+ renderer.setSize(window.innerWidth,window.innerHeight);
+});
+</script>
+</body>
+</html>

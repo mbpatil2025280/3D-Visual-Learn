@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Universal Gravitation Lab</title>
+    <style>
+        :root { --accent: #fbbf24; --bg: #020617; }
+        body { margin: 0; background: var(--bg); color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .ui { padding: 20px; text-align: center; max-width: 850px; }
+        canvas { background: radial-gradient(circle, #1e293b 0%, #020617 100%); border-radius: 12px; box-shadow: 0 0 50px rgba(59, 130, 246, 0.2); border: 1px solid #1e293b; }
+        .controls { background: #1e293b; padding: 20px; border-radius: 12px; margin-top: 15px; display: flex; gap: 20px; align-items: center; }
+        button { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #2563eb; transform: translateY(-2px); }
+        .stats { font-family: monospace; color: var(--accent); font-size: 1.2rem; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="ui">
+    <h1>Universal Law of Gravitation</h1>
+    <p>Move the planets or change their mass to see how the gravitational force vector changes.</p>
+    
+    <div class="controls">
+        <label>Mass of Planet B: <input type="range" id="massRange" min="10" max="100" value="50"></label>
+        <button onclick="playLesson()">🔊 Explain Gravity</button>
+    </div>
+    <div class="stats" id="forceDisplay">Force: Calculating...</div>
+</div>
+
+<canvas id="gravCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gravCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 850; canvas.height = 400;
+
+    let planetA = { x: 250, y: 200, m: 80, color: '#3b82f6' };
+    let planetB = { x: 600, y: 200, m: 50, color: '#f59e0b', dragging: false };
+
+    canvas.addEventListener('mousedown', e => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const dist = Math.hypot(mouseX - planetB.x, mouseY - planetB.y);
+        if (dist < 40) planetB.dragging = true;
+    });
+
+    canvas.addEventListener('mousemove', e => {
+        if (planetB.dragging) {
+            const rect = canvas.getBoundingClientRect();
+            planetB.x = e.clientX - rect.left;
+            planetB.y = e.clientY - rect.top;
+        }
+    });
+
+    window.addEventListener('mouseup', () => planetB.dragging = false);
+
+    function playLesson() {
+        const msg = new SpeechSynthesisUtterance("According to Newton, gravity is a universal pull. Even though the planets are far apart, they attract each other. If you move them closer, the force increases rapidly. If you increase the mass, the pull gets stronger. This force keeps the moon in orbit and stars in their galaxies.");
+        window.speechSynthesis.speak(msg);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        planetB.m = parseInt(document.getElementById('massRange').value);
+
+        // Calculate Distance and Force
+        const dx = planetB.x - planetA.x;
+        const dy = planetB.y - planetA.y;
+        const r = Math.max(Math.hypot(dx, dy), 50); // Prevent division by zero
+        const forceMagnitude = (planetA.m * planetB.m) / (r * r) * 500;
+        document.getElementById('forceDisplay').innerText = `Gravitational Force: ${forceMagnitude.toFixed(2)} Units`;
+
+        // Draw Interaction Line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(planetA.x, planetA.y); ctx.lineTo(planetB.x, planetB.y); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw Force Vectors
+        const angle = Math.atan2(dy, dx);
+        drawVector(planetA.x, planetA.y, angle, forceMagnitude, '#10b981');
+        drawVector(planetB.x, planetB.y, angle + Math.PI, forceMagnitude, '#10b981');
+
+        // Draw Planets
+        drawPlanet(planetA);
+        drawPlanet(planetB);
+
+        requestAnimationFrame(draw);
+    }
+
+    function drawPlanet(p) {
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.m * 0.4 + 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function drawVector(x, y, angle, mag, color) {
+        const length = Math.min(mag * 20, 150);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+        ctx.stroke();
+    }
+
+    draw();
+</script>
+</body>
+</html>

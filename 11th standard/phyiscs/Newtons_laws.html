@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Newton's Laws Lab</title>
+    <style>
+        body { margin: 0; background: #0f172a; color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); margin: 20px; border: 1px solid #334155; }
+        .panel { padding: 20px; text-align: center; max-width: 850px; }
+        .controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; background: #3b82f6; color: white; }
+        button:hover { background: #2563eb; }
+        .data { font-family: monospace; color: #fbbf24; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h1>Newton's Three Laws of Motion</h1>
+        <div class="controls">
+            <button onclick="applyLaw1()">1st Law (Inertia)</button>
+            <button onclick="applyLaw2()">2nd Law (F=ma)</button>
+            <button onclick="applyLaw3()">3rd Law (Action/Reaction)</button>
+            <button style="background:#ef4444" onclick="resetSim()">Reset</button>
+        </div>
+        <div class="data" id="stats">Select a Law to Begin</div>
+    </div>
+    <canvas id="newtonCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('newtonCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 400;
+
+    let obj = { x: 100, y: 300, v: 0, a: 0, m: 5, color: '#3b82f6' };
+    let reactionObj = { x: 50, y: 300, v: 0, active: false };
+    let currentLaw = 0;
+
+    function speak(text) {
+        const msg = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(msg);
+    }
+
+    function applyLaw1() {
+        resetSim();
+        currentLaw = 1;
+        obj.v = 2; // Constant velocity
+        document.getElementById('stats').innerText = "Law 1: No net force = Constant Velocity";
+        speak("Law one states that an object in motion stays in motion at a constant velocity unless acted on by a net force. Notice how the block moves without needing a constant push.");
+    }
+
+    function applyLaw2() {
+        resetSim();
+        currentLaw = 2;
+        obj.a = 0.05; // Acceleration
+        document.getElementById('stats').innerText = "Law 2: Applied Force causes Acceleration (F = ma)";
+        speak("Law two shows that force equals mass times acceleration. By applying a constant force, the block gets faster and faster every second.");
+    }
+
+    function applyLaw3() {
+        resetSim();
+        currentLaw = 3;
+        reactionObj.active = true;
+        obj.v = 2;
+        reactionObj.v = -2; // Equal and opposite
+        document.getElementById('stats').innerText = "Law 3: Every action has an equal and opposite reaction";
+        speak("Law three. When the blue block pushes off the wall, it moves forward while the wall exerts an equal force backward. Action and reaction.");
+    }
+
+    function resetSim() {
+        obj = { x: 100, y: 300, v: 0, a: 0, m: 5, color: '#3b82f6' };
+        reactionObj = { x: 50, y: 300, v: 0, active: false };
+        document.getElementById('stats').innerText = "Ready";
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Ground
+        ctx.strokeStyle = '#475569';
+        ctx.beginPath(); ctx.moveTo(0, 350); ctx.lineTo(800, 350); ctx.stroke();
+
+        // Object
+        ctx.fillStyle = obj.color;
+        ctx.fillRect(obj.x, obj.y, 50, 50);
+
+        // Reaction Object for Law 3
+        if (reactionObj.active) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(reactionObj.x, reactionObj.y, 10, 50);
+            reactionObj.x += reactionObj.v;
+        }
+
+        // Physics Update
+        obj.v += obj.a;
+        obj.x += obj.v;
+        if (obj.x > 850) obj.x = -50;
+
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>

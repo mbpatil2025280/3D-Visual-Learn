@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Our Emotional World: 3D Visualization</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Segoe UI', sans-serif; }
+        
+        /* UI Panel: Bottom-Right & Right-Aligned */
+        #ui-panel {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 380px;
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(12px);
+            padding: 25px;
+            border-bottom: 5px solid #9b59b6;
+            color: white;
+            text-align: right; 
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 22px; color: #9b59b6; text-transform: uppercase; }
+        p { font-size: 14px; line-height: 1.6; color: #bbb; margin: 15px 0; }
+        
+        .emotion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        button {
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px;
+            color: white;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+        button:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
+        #indicator { font-size: 11px; color: #9b59b6; margin-top: 10px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div id="ui-panel">
+    <h1>Our Emotional World</h1>
+    <p id="desc">Emotions are like the weather—they arrive, they stay for a while, and then they pass. Understanding them is the key to mental strength.</p>
+    
+    <div class="emotion-grid">
+        <button onclick="setEmotion('Joy', 0xf1c40f, 0.05)">JOY (Glow)</button>
+        <button onclick="setEmotion('Calm', 0x3498db, 0.01)">CALM (Still)</button>
+        <button onclick="setEmotion('Anger', 0xe74c3c, 0.2)">ANGER (Heat)</button>
+        <button onclick="setEmotion('Growth', 0x2ecc71, 0.03)">GROWTH (Flow)</button>
+    </div>
+    
+    <div id="indicator">Current State: Equilibrium</div>
+</div>
+
+<script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+
+    let scene, camera, renderer, core, particles;
+    let speed = 0.01;
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 1. THE EMOTIONAL CORE (A "Real-world" energy sphere)
+        const geo = new THREE.IcosahedronGeometry(10, 4);
+        const mat = new THREE.MeshStandardMaterial({ 
+            color: 0x9b59b6, 
+            wireframe: true,
+            emissive: 0x221133,
+            roughness: 0
+        });
+        core = new THREE.Mesh(geo, mat);
+        scene.add(core);
+
+        // 2. LIGHTING
+        const light = new THREE.PointLight(0xffffff, 2, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x444444));
+
+        // 3. BACKGROUND PARTICLES (Subconscious thoughts)
+        const pGeo = new THREE.BufferGeometry();
+        const pCount = 2000;
+        const pPos = new Float32Array(pCount * 3);
+        for(let i=0; i<pCount*3; i++) pPos[i] = (Math.random() - 0.5) * 100;
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        particles = new THREE.Points(pGeo, new THREE.PointsMaterial({color: 0x444444, size: 0.1}));
+        scene.add(particles);
+
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        core.rotation.y += speed;
+        core.rotation.x += speed * 0.5;
+        particles.rotation.y += 0.001;
+        renderer.render(scene, camera);
+    }
+
+    window.setEmotion = function(label, color, newSpeed) {
+        let msg = "";
+        let audio = "";
+
+        if(label === 'Joy') {
+            msg = "Joy expands our perspective and connects us to others. It is high energy and light.";
+            audio = "Joy is a state of high energy. It helps us build social bonds and fuels our creativity. Feel the lightness it brings to your core.";
+        } else if(label === 'Calm') {
+            msg = "Calm is the foundation of clear thinking. It allows the mind to rest and observe.";
+            audio = "Calmness is about stillness. When you are calm, you can make better decisions because your emotional weather is clear.";
+        } else if(label === 'Anger') {
+            msg = "Anger is a signal that something feels unfair. It is intense energy that needs direction.";
+            audio = "Anger is like heat. It is a powerful signal that a boundary has been crossed. The key is to use this energy to solve problems, not create them.";
+        } else {
+            msg = "Growth happens when we balance our emotions and learn from every experience.";
+            audio = "Emotional growth is the process of recognizing your feelings and choosing how to respond to them. You are the master of your emotional world.";
+        }
+
+        speed = newSpeed;
+        gsap.to(core.material.color, { r: (color >> 16 & 255) / 255, g: (color >> 8 & 255) / 255, b: (color & 255) / 255, duration: 1 });
+        gsap.to(core.material.emissive, { r: (color >> 16 & 255) / 500, g: (color >> 8 & 255) / 500, b: (color & 255) / 500, duration: 1 });
+        
+        document.getElementById('desc').innerText = msg;
+        document.getElementById('indicator').innerText = "Current State: " + label;
+
+        const speech = new SpeechSynthesisUtterance(audio);
+        window.speechSynthesis.speak(speech);
+    };
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+</body>
+</html>

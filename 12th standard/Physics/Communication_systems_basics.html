@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Communication Systems Lab</title>
+    <style>
+        :root { --accent: #10b981; --bg: #0f172a; }
+        body { margin: 0; background: var(--bg); color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .ui { padding: 20px; text-align: center; max-width: 850px; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #334155; margin: 10px; }
+        .controls { margin-top: 15px; display: flex; gap: 15px; background: #1e293b; padding: 15px; border-radius: 8px; }
+        button { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { filter: brightness(1.1); transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<div class="ui">
+    <h1>Modulation Principles</h1>
+    <p>Watch how the low-frequency <b>Message</b> shapes the high-frequency <b>Carrier</b> wave to create a <b>Modulated Signal</b>.</p>
+    
+    <div class="controls">
+        <button onclick="playLesson()">🔊 Explain Modulation</button>
+    </div>
+</div>
+
+<canvas id="commCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('commCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 450;
+
+    let time = 0;
+
+    function playLesson() {
+        const msg = new SpeechSynthesisUtterance("Human voice has a low frequency and cannot travel long distances. To solve this, we use a high-frequency carrier wave. In Amplitude Modulation, the strength of the carrier wave is changed according to the message signal. This allows the information to travel through space efficiently.");
+        window.speechSynthesis.speak(msg);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const centerX = 400;
+        const msgFreq = 0.02;
+        const carrierFreq = 0.4;
+        const msgAmp = 40;
+        const carrierAmp = 60;
+
+        // 1. Message Signal (The Data)
+        ctx.strokeStyle = "#3b82f6";
+        ctx.beginPath();
+        for(let x=50; x<750; x++) {
+            let y = 80 + Math.sin(x * msgFreq + time) * msgAmp;
+            if(x===50) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = "#3b82f6"; ctx.fillText("Message Signal (Information)", 50, 30);
+
+        // 2. Modulated Signal (The Result)
+        ctx.strokeStyle = "#fbbf24";
+        ctx.beginPath();
+        for(let x=50; x<750; x++) {
+            // The message shapes the amplitude of the carrier
+            let envelope = 1 + (Math.sin(x * msgFreq + time) * 0.5);
+            let y = 300 + Math.sin(x * carrierFreq) * carrierAmp * envelope;
+            if(x===50) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = "#fbbf24"; ctx.fillText("Modulated Signal (AM)", 50, 220);
+
+        time -= 0.1;
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Compound Microscope Simulation</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #ui { position: absolute; top: 20px; left: 20px; width: 300px; background: rgba(10, 20, 30, 0.9); padding: 20px; border-radius: 12px; border: 2px solid #00ffaa; z-index: 100; }
+        .slider-label { display: flex; justify-content: space-between; margin: 10px 0 5px; font-size: 0.9em; }
+        input[type=range] { width: 100%; accent-color: #00ffaa; }
+        button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 6px; background: #00ffaa; color: #000; font-weight: bold; cursor: pointer; }
+        #status { margin-top: 10px; font-size: 0.8em; color: #00ffaa; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h2 style="margin:0; color:#00ffaa;">Compound Microscope</h2>
+        <div class="slider-label"><span>Object Distance (u)</span></div>
+        <input type="range" id="u-obj" min="-3" max="-1.2" step="0.1" value="-1.5">
+        
+        <div id="status">Total Magnification: <span id="mag-val">...</span>x</div>
+        
+        <button onclick="playLesson()">🔊 Explain Optics</button>
+        <p style="font-size: 0.75em; color: #999; margin-top: 10px;">The yellow ray shows the path through the Objective and Eyepiece.</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.set(0, 4, 12);
+        camera.lookAt(0, 0, 0);
+
+        // --- Optical Bench Elements ---
+        const benchGeo = new THREE.BoxGeometry(20, 0.1, 0.5);
+        const bench = new THREE.Mesh(benchGeo, new THREE.MeshBasicMaterial({color: 0x333333}));
+        scene.add(bench);
+
+        // Lenses
+        const lensMat = new THREE.MeshPhongMaterial({color: 0x00ffaa, transparent: true, opacity: 0.4});
+        const objLens = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), lensMat);
+        objLens.scale.set(0.1, 1, 1);
+        objLens.position.x = -4; // Objective at x = -4
+        scene.add(objLens);
+
+        const eyeLens = new THREE.Mesh(new THREE.SphereGeometry(2.5, 32, 32), lensMat);
+        eyeLens.scale.set(0.1, 1, 1);
+        eyeLens.position.x = 4; // Eyepiece at x = 4
+        scene.add(eyeLens);
+
+        // Ray
+        const rayLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color: 0xffff00}));
+        scene.add(rayLine);
+
+        // Lights
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(0, 10, 5);
+        scene.add(light);
+
+        function updateMicroscope() {
+            const u = parseFloat(document.getElementById('u-obj').value);
+            const fo = 1.0; // Obj Focal length
+            const fe = 2.0; // Eye Focal length
+            
+            // Image from Objective (v1)
+            const v1 = 1 / ((1/fo) + (1/u));
+            const m1 = -v1 / u;
+            
+            // For simplicity, we show a standard 3D path
+            const points = [
+                new THREE.Vector3(objLens.position.x + u, 0.5, 0),   // Object
+                new THREE.Vector3(objLens.position.x, 0.5, 0),       // At Obj Lens
+                new THREE.Vector3(objLens.position.x + v1, -0.5*m1, 0), // Intermediate Image
+                new THREE.Vector3(eyeLens.position.x, -0.5*m1, 0),   // At Eye Lens
+                new THREE.Vector3(10, -5, 0)                        // Exit ray
+            ];
+            
+            rayLine.geometry.setFromPoints(points);
+            document.getElementById('mag-val').innerText = Math.abs(m1 * 5).toFixed(1);
+        }
+
+        function playLesson() {
+            window.speechSynthesis.cancel();
+            const text = "In a compound microscope, light first passes through the objective lens, creating a real and magnified intermediate image. Then, the eyepiece acts as a simple magnifier, enlarging this image even further. The final image is virtual, inverted, and significantly larger than the original object. This is how we see microscopic cells.";
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateMicroscope();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

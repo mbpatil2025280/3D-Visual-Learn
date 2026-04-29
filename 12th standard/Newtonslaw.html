@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newton's Laws 3D Laboratory</title>
+    <style>
+        body { margin: 0; background: #0a0a0c; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #ui-panel {
+            position: absolute; top: 20px; left: 20px; z-index: 10;
+            background: rgba(20, 20, 25, 0.8); padding: 25px; border-radius: 12px;
+            border-left: 5px solid #ffcc00; max-width: 380px; backdrop-filter: blur(10px);
+        }
+        .controls { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        button {
+            padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;
+            background: #333; color: white; font-weight: bold; transition: 0.3s;
+        }
+        button.active { background: #ffcc00; color: #000; }
+        h1 { margin: 0 0 10px 0; font-size: 1.5rem; color: #ffcc00; }
+        p { line-height: 1.5; font-size: 0.95rem; color: #ccc; }
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        #start-btn { padding: 20px 40px; font-size: 1.5rem; background: #ffcc00; color: #000; border-radius: 50px; }
+    </style>
+</head>
+<body>
+
+<div id="start-overlay">
+    <h1>Newton's Laws in 3D</h1>
+    <button id="start-btn" onclick="startLab()">ENTER LABORATORY</button>
+</div>
+
+<div id="ui-panel">
+    <h1 id="law-title">1st Law: Inertia</h1>
+    <p id="law-desc">An object stays at rest unless acted upon by a force. Notice the ball remains still until the "Kick" force is applied.</p>
+    
+    <div class="controls">
+        <button onclick="switchLaw(1)" id="btn1" class="active">1st Law</button>
+        <button onclick="switchLaw(2)" id="btn2">2nd Law</button>
+        <button onclick="switchLaw(3)" id="btn3">3rd Law</button>
+        <button onclick="resetScene()" style="background: #444;">Reset</button>
+    </div>
+</div>
+
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    let scene, camera, renderer, ball, box, ball2;
+    let currentLaw = 1;
+    let clock = new THREE.Clock();
+    let audioCtx;
+
+    window.startLab = () => {
+        document.getElementById('start-overlay').style.display = 'none';
+        init();
+        animate();
+    };
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 12);
+        camera.lookAt(0, 2, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambient);
+        const point = new THREE.PointLight(0xffcc00, 100);
+        point.position.set(5, 5, 5);
+        scene.add(point);
+
+        // Grid Floor
+        const grid = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+        scene.add(grid);
+
+        setupObjects();
+    }
+
+    function setupObjects() {
+        if(ball) scene.remove(ball);
+        if(box) scene.remove(box);
+        if(ball2) scene.remove(ball2);
+
+        const geo = new THREE.SphereGeometry(1, 32, 32);
+        const mat = new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.7, roughness: 0.2 });
+        ball = new THREE.Mesh(geo, mat);
+        ball.position.y = 1;
+        scene.add(ball);
+
+        if (currentLaw === 3) {
+            const mat2 = new THREE.MeshStandardMaterial({ color: 0x00d4ff });
+            ball2 = new THREE.Mesh(geo, mat2);
+            ball2.position.set(3, 1, 0);
+            scene.add(ball2);
+        }
+    }
+
+    window.switchLaw = (num) => {
+        currentLaw = num;
+        const titles = ["1st Law: Inertia", "2nd Law: F = m × a", "3rd Law: Action & Reaction"];
+        const descs = [
+            "Objects resist changes in motion. The ball won't move without external force.",
+            "Heavier objects (greater mass) require more force to accelerate. Watch the speed change.",
+            "For every action, there is an equal and opposite reaction. Watch the balls bounce off each other."
+        ];
+        
+        document.getElementById('law-title').innerText = titles[num-1];
+        document.getElementById('law-desc').innerText = descs[num-1];
+        
+        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn'+num).classList.add('active');
+        
+        playClickSound(num);
+        resetScene();
+    };
+
+    window.resetScene = () => {
+        setupObjects();
+        clock = new THREE.Clock();
+    };
+
+    function playClickSound(num) {
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(200 + (num * 100), audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const elapsed = clock.getElapsedTime();
+
+        if (currentLaw === 1 && elapsed > 2) {
+            // First Law: Sudden force after 2 seconds
+            ball.position.x += 0.1;
+        } else if (currentLaw === 2) {
+            // Second Law: Constant Acceleration
+            ball.position.x += 0.02 * (elapsed * elapsed);
+        } else if (currentLaw === 3 && elapsed > 1) {
+            // Third Law: Collision
+            if (ball.position.x < 1.5) {
+                ball.position.x += 0.1;
+                ball2.position.x -= 0.1;
+            } else {
+                // Bounce back
+                ball.position.x -= 0.05;
+                ball2.position.x += 0.05;
+            }
+        }
+
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>

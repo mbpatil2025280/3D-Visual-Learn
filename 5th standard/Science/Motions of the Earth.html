@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Motions of the Earth: 3D Interactive</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        
+        /* UI Panel: Bottom-Right & Right-Aligned */
+        #ui-panel {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 400px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-right: 5px solid #f1c40f;
+            color: white;
+            text-align: right; 
+            border-radius: 15px 0 0 15px;
+            box-shadow: -10px 10px 30px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 22px; color: #f1c40f; text-transform: uppercase; }
+        p { font-size: 14px; line-height: 1.6; color: #ccc; margin: 15px 0; }
+        
+        .controls { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+        button {
+            background: #f1c40f;
+            border: none;
+            padding: 10px 20px;
+            color: black;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 180px;
+            transition: 0.3s;
+        }
+        button:hover { background: #fff; transform: scale(1.05); }
+        #status { font-size: 12px; color: #00d2ff; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="ui-panel">
+    <h1>Motions of the Earth</h1>
+    <p id="info-text">The Earth is never still. It spins on its axis and travels around the Sun. These motions create our days, nights, and seasons.</p>
+    
+    <div class="controls">
+        <button onclick="playMotion('Rotation')">DEMO: ROTATION</button>
+        <button onclick="playMotion('Revolution')">DEMO: REVOLUTION</button>
+    </div>
+    
+    <div id="status">System: Ready to Explore</div>
+</div>
+
+<script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+    import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+
+    let scene, camera, renderer, earth, sun, orbitGroup;
+    let isRevolving = false;
+    let angle = 0;
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 30, 60);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 1. THE SUN (Real-world star light source)
+        const sunGeo = new THREE.SphereGeometry(5, 32, 32);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+        sun = new THREE.Mesh(sunGeo, sunMat);
+        scene.add(sun);
+
+        const sunLight = new THREE.PointLight(0xffffff, 2, 200);
+        scene.add(sunLight);
+
+        // 2. THE EARTH (With axial tilt)
+        const earthGroup = new THREE.Group();
+        const earthGeo = new THREE.SphereGeometry(3, 32, 32);
+        const earthMat = new THREE.MeshStandardMaterial({ 
+            color: 0x2233ff,
+            emissive: 0x112244,
+            roughness: 0.5
+        });
+        earth = new THREE.Mesh(earthGeo, earthMat);
+        
+        // Axial Tilt of 23.5 degrees
+        earthGroup.rotation.z = THREE.MathUtils.degToRad(23.5);
+        earthGroup.add(earth);
+        
+        orbitGroup = new THREE.Group();
+        orbitGroup.add(earthGroup);
+        earthGroup.position.x = 30; // Orbit distance
+        scene.add(orbitGroup);
+
+        // 3. STARS BACKGROUND
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 5000;
+        const posArray = new Float32Array(starCount * 3);
+        for(let i=0; i<starCount*3; i++) posArray[i] = (Math.random() - 0.5) * 500;
+        starGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const starMat = new THREE.PointsMaterial({ size: 0.1, color: 0xffffff });
+        scene.add(new THREE.Points(starGeo, starMat));
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // Constant Rotation (Day/Night)
+        earth.rotation.y += 0.01;
+
+        if(isRevolving) {
+            angle += 0.005;
+            orbitGroup.rotation.y = angle;
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    window.playMotion = function(type) {
+        let msg = "";
+        let audio = "";
+
+        if(type === 'Rotation') {
+            isRevolving = false;
+            msg = "Rotation: Earth spins on its axis from West to East every 24 hours, causing Day and Night.";
+            audio = "Rotation is the spinning of the Earth on its axis. It takes 24 hours to complete one turn. This is why we have day and night. The side facing the sun experiences day, while the other side is in darkness.";
+            gsap.to(camera.position, { x: 35, y: 10, z: 20, duration: 2 });
+        } else {
+            isRevolving = true;
+            msg = "Revolution: Earth travels around the Sun in an elliptical orbit every 365.25 days, causing Seasons.";
+            audio = "Revolution is the Earth's movement around the Sun in a fixed path called an orbit. Combined with the Earth's tilt, this motion creates our seasons: Summer, Winter, Spring, and Autumn.";
+            gsap.to(camera.position, { x: 0, y: 60, z: 80, duration: 2 });
+        }
+
+        document.getElementById('info-text').innerText = msg;
+        document.getElementById('status').innerText = "Status: Animating " + type;
+        
+        const speech = new SpeechSynthesisUtterance(audio);
+        window.speechSynthesis.speak(speech);
+    };
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Coulomb's Law Interactive</title>
+    <style>
+        body { margin: 0; background: #050505; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        #ui-panel { position: absolute; top: 20px; left: 20px; width: 300px; background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 10px; border: 1px solid #444; z-index: 10; }
+        h1 { font-size: 1.2em; color: #00d4ff; margin-top: 0; }
+        .slider-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9em; margin-bottom: 5px; }
+        input[type=range] { width: 100%; cursor: pointer; }
+        .data-display { background: #111; padding: 10px; border-radius: 5px; margin-top: 10px; border-left: 3px solid #00d4ff; }
+        button { background: #00d4ff; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background: #0099bb; }
+        #formula-box { position: absolute; bottom: 20px; right: 20px; font-size: 1.5em; background: rgba(0,0,0,0.5); padding: 15px; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-panel">
+        <h1>Coulomb's Law 3D</h1>
+        <div class="slider-group">
+            <label>Charge 1 (q1): <span id="q1-val">5</span> μC</label>
+            <input type="range" id="q1-slider" min="-10" max="10" value="5">
+        </div>
+        <div class="slider-group">
+            <label>Charge 2 (q2): <span id="q2-val">-5</span> μC</label>
+            <input type="range" id="q2-slider" min="-10" max="10" value="-5">
+        </div>
+        <div class="slider-group">
+            <label>Distance (r): <span id="r-val">4</span> m</label>
+            <input type="range" id="r-slider" min="2" max="10" step="0.1" value="4">
+        </div>
+        <div class="data-display">
+            Force: <span id="force-result">0</span> Newtons
+        </div>
+        <button onclick="playExplanation()">🔊 Play Audio Lesson</button>
+    </div>
+
+    <div id="formula-box">
+        F = k · (|q₁|·|q₂|) / r²
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // --- 1. Scene Setup ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lights
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // --- 2. Create Charges ---
+        const sphereGeo = new THREE.SphereGeometry(1, 32, 32);
+        
+        const charge1 = new THREE.Mesh(sphereGeo, new THREE.MeshPhongMaterial({ color: 0xff0000 }));
+        const charge2 = new THREE.Mesh(sphereGeo, new THREE.MeshPhongMaterial({ color: 0x0000ff }));
+        scene.add(charge1);
+        scene.add(charge2);
+
+        // Arrows for Force (Vectors)
+        const arrowHelper1 = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,0), 2, 0xffff00);
+        const arrowHelper2 = new THREE.ArrowHelper(new THREE.Vector3(-1,0,0), new THREE.Vector3(0,0,0), 2, 0xffff00);
+        scene.add(arrowHelper1);
+        scene.add(arrowHelper2);
+
+        // Grid
+        const grid = new THREE.GridHelper(20, 20, 0x333333, 0x222222);
+        grid.rotation.x = Math.PI / 2;
+        scene.add(grid);
+
+        camera.position.z = 15;
+
+        // --- 3. Physics Logic ---
+        const k = 8.99e9; // Coulomb's constant
+        const q1Slider = document.getElementById('q1-slider');
+        const q2Slider = document.getElementById('q2-slider');
+        const rSlider = document.getElementById('r-slider');
+
+        function updatePhysics() {
+            const q1 = parseFloat(q1Slider.value) * 1e-6; // convert micro to standard
+            const q2 = parseFloat(q2Slider.value) * 1e-6;
+            const r = parseFloat(rSlider.value);
+
+            // Update Text UI
+            document.getElementById('q1-val').innerText = q1Slider.value;
+            document.getElementById('q2-val').innerText = q2Slider.value;
+            document.getElementById('r-val').innerText = rSlider.value;
+
+            // Calculate Force
+            const force = k * Math.abs(q1 * q2) / Math.pow(r, 2);
+            document.getElementById('force-result').innerText = force.toFixed(2);
+
+            // Update 3D Positions
+            charge1.position.x = -r/2;
+            charge2.position.x = r/2;
+
+            // Update Colors (Red for +, Blue for -)
+            charge1.material.color.setHex(q1 >= 0 ? 0xff4444 : 0x4444ff);
+            charge2.material.color.setHex(q2 >= 0 ? 0xff4444 : 0x4444ff);
+
+            // Update Force Arrows
+            const direction = (q1 * q2 > 0) ? 1 : -1; // Same charges repel (+), opposite attract (-)
+            arrowHelper1.position.copy(charge1.position);
+            arrowHelper2.position.copy(charge2.position);
+            
+            arrowHelper1.setDirection(new THREE.Vector3(-direction, 0, 0));
+            arrowHelper2.setDirection(new THREE.Vector3(direction, 0, 0));
+            
+            const arrowLength = Math.min(force / 10, 5); // Scale arrow for visualization
+            arrowHelper1.setLength(arrowLength + 0.1);
+            arrowHelper2.setLength(arrowLength + 0.1);
+        }
+
+        // --- 4. Audio Explanation ---
+        function playExplanation() {
+            window.speechSynthesis.cancel(); // Stop current speech
+            const text = `Welcome to the 3D Coulomb's Law simulator. 
+            Look at the two spheres. When you increase the charge, the force arrows get longer. 
+            If both charges are the same color, they push each other away. This is repulsion.
+            If they are different colors, notice the arrows point inward. This is attraction.
+            The most important thing to see is that as you pull the charges apart, the force drops very quickly because of the Inverse Square Law.`;
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            updatePhysics();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

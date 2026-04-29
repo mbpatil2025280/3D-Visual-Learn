@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Properties of EM Waves</title>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: sans-serif; overflow: hidden; }
+        #ui { position: absolute; top: 20px; left: 20px; width: 300px; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 12px; border: 1px solid #ff0000; z-index: 100; }
+        .legend { display: flex; align-items: center; margin-bottom: 10px; }
+        .color-box { width: 15px; height: 15px; margin-right: 10px; border-radius: 3px; }
+        button { width: 100%; padding: 12px; background: #ff0000; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #axis-label { position: absolute; bottom: 20px; right: 20px; font-style: italic; color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h2 style="margin:0;">EM Wave Properties</h2>
+        <div class="legend"><div class="color-box" style="background:red;"></div>Electric Field (E)</div>
+        <div class="legend"><div class="color-box" style="background:blue;"></div>Magnetic Field (B)</div>
+        <p style="font-size: 0.8em; color: #ccc;">Angle between E and B is exactly 90°.</p>
+        <button onclick="speakProperties()">🔊 Voice Explanation</button>
+    </div>
+
+    <div id="axis-label">X-Axis: Direction of Propagation</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.set(10, 8, 15);
+        camera.lookAt(0, 0, 0);
+
+        // --- Create Waves ---
+        const pointsCount = 200;
+        const eGeometry = new THREE.BufferGeometry();
+        const bGeometry = new THREE.BufferGeometry();
+        const ePos = new Float32Array(pointsCount * 3);
+        const bPos = new Float32Array(pointsCount * 3);
+
+        const eMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
+        const bMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff, linewidth: 2 });
+
+        const eWave = new THREE.Line(eGeometry, eMaterial);
+        const bWave = new THREE.Line(bGeometry, bMaterial);
+        scene.add(eWave);
+        scene.add(bWave);
+
+        // Central axis
+        const axisGeo = new THREE.BoxGeometry(30, 0.05, 0.05);
+        scene.add(new THREE.Mesh(axisGeo, new THREE.MeshBasicMaterial({color: 0x444444})));
+
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.05;
+
+            for (let i = 0; i < pointsCount; i++) {
+                let x = (i / pointsCount) * 30 - 15;
+                let phase = x - time;
+
+                // Electric Field (Y-axis)
+                ePos[i * 3] = x;
+                ePos[i * 3 + 1] = Math.sin(phase) * 3;
+                ePos[i * 3 + 2] = 0;
+
+                // Magnetic Field (Z-axis) - 90 degrees offset in space
+                bPos[i * 3] = x;
+                bPos[i * 3 + 1] = 0;
+                bPos[i * 3 + 2] = Math.sin(phase) * 3;
+            }
+
+            eGeometry.setAttribute('position', new THREE.BufferAttribute(ePos, 3));
+            bGeometry.setAttribute('position', new THREE.BufferAttribute(bPos, 3));
+            renderer.render(scene, camera);
+        }
+
+        function speakProperties() {
+            window.speechSynthesis.cancel();
+            const text = `Electromagnetic waves are transverse in nature. As you can see, the red electric field vibrates vertically, while the blue magnetic field vibrates horizontally. They are always perpendicular to each other and perpendicular to the direction of the wave. These waves do not need any material medium and travel at the speed of light.`;
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+        }
+
+        animate();
+        window.onresize = () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+    </script>
+</body>
+</html>

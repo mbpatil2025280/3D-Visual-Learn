@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Wave Physics Experience</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #overlay {
+            position: absolute; top: 20px; left: 20px; z-index: 10;
+            background: rgba(0, 0, 0, 0.7); padding: 20px; border-left: 4px solid #00d4ff;
+            max-width: 350px; pointer-events: none;
+        }
+        .metric { font-family: monospace; color: #00d4ff; margin: 10px 0; font-size: 1.1rem; }
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #001a33 0%, #000 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+        }
+        button {
+            padding: 15px 40px; font-size: 1.2rem; background: #00d4ff;
+            color: #000; border: none; cursor: pointer; border-radius: 50px;
+            font-weight: bold; transition: 0.4s; box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        button:hover { background: #fff; transform: scale(1.1); }
+        h1 { letter-spacing: 5px; text-transform: uppercase; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>Wave Mechanics</h1>
+        <p>Interactive 3D Fluid Simulation</p>
+        <button onclick="startApp()">ENTER LABORATORY</button>
+    </div>
+
+    <div id="overlay">
+        <h2>Transverse Waves</h2>
+        <div class="metric" id="freq">Frequency: 0.5 Hz</div>
+        <div class="metric" id="amp">Amplitude: Dynamic</div>
+        <p>Waves transfer <b>energy</b>, not matter. In this 3D grid, each point oscillates up and down (Y-axis) while the wave pattern travels across the surface.</p>
+        <p><small>Use mouse to rotate and scroll to zoom.</small></p>
+    </div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        let scene, camera, renderer, plane, audioCtx;
+        const width = 100, height = 100;
+
+        window.startApp = function() {
+            document.getElementById('start-screen').style.display = 'none';
+            init();
+            initAudio();
+            animate();
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 30, 60);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting for "Liquid" look
+            const light = new THREE.DirectionalLight(0x00d4ff, 2);
+            light.position.set(1, 1, 1);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0x404040));
+
+            // Create the Wave Surface (High-density Grid)
+            const geometry = new THREE.PlaneGeometry(80, 80, 64, 64);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x004466,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.8,
+                emissive: 0x001122
+            });
+
+            plane = new THREE.Mesh(geometry, material);
+            plane.rotation.x = -Math.PI / 2;
+            scene.add(plane);
+        }
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = buffer.getChannelData(0);
+            
+            // Create White Noise for "Sea Sound"
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = buffer;
+            whiteNoise.loop = true;
+
+            // Filter noise to sound like "deep water"
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 400;
+
+            const lfo = audioCtx.createOscillator(); // Low Frequency Osc for "rhythm"
+            const lfoGain = audioCtx.createGain();
+            lfo.type = 'sine';
+            lfo.frequency.value = 0.2; // 5 second wave cycle
+            lfoGain.gain.value = 0.5;
+
+            const gainNode = audioCtx.createGain();
+            
+            whiteNoise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(gainNode.gain);
+
+            whiteNoise.start();
+            lfo.start();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now() * 0.002;
+
+            // Manipulate Geometry Vertices for Wave Motion
+            const positions = plane.geometry.attributes.position;
+            for (let i = 0; i < positions.count; i++) {
+                const x = positions.getX(i);
+                const y = positions.getY(i);
+                
+                // Sinusoidal Wave Formula: z = A * sin(kx - wt)
+                const z = Math.sin(x * 0.2 + time) * 2.5 + 
+                          Math.cos(y * 0.2 + time * 0.8) * 2.5;
+                
+                positions.setZ(i, z);
+            }
+            positions.needsUpdate = true;
+
+            // Slow rotation for cinematic effect
+            plane.rotation.z += 0.001;
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Electric Field Lines - Interactive</title>
+    <style>
+        body { margin: 0; background: #020202; color: #fff; font-family: sans-serif; overflow: hidden; }
+        #overlay { position: absolute; top: 20px; left: 20px; width: 320px; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 12px; border: 1px solid #444; }
+        .ctrl { margin-bottom: 15px; }
+        button { width: 100%; padding: 10px; background: #6200ee; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #data { color: #bb86fc; font-family: monospace; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <div id="overlay">
+        <h3>Electric Field Lines 3D</h3>
+        <div class="ctrl">
+            <label>Charge 1 (Red): <input type="range" id="q1" min="-5" max="5" value="3" step="0.1"></label>
+        </div>
+        <div class="ctrl">
+            <label>Charge 2 (Blue): <input type="range" id="q2" min="-5" max="5" value="-3" step="0.1"></label>
+        </div>
+        <div id="data">Calculating Field Vectors...</div>
+        <button onclick="narrate()">🔊 Fast Explanation</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.set(10, 10, 15);
+        camera.lookAt(0,0,0);
+
+        // Charges
+        const sphereGeo = new THREE.SphereGeometry(0.5, 16, 16);
+        const pCharge = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({color: 0xff4444}));
+        const nCharge = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({color: 0x4444ff}));
+        scene.add(pCharge);
+        scene.add(nCharge);
+
+        // Vector Field (Arrows)
+        const arrows = [];
+        const gridRes = 8;
+        for(let x=-gridRes; x<=gridRes; x+=2) {
+            for(let y=-gridRes; y<=gridRes; y+=2) {
+                for(let z=-gridRes; z<=gridRes; z+=2) {
+                    const arrow = new THREE.ArrowHelper(
+                        new THREE.Vector3(1,0,0), 
+                        new THREE.Vector3(x,y,z), 
+                        0.8, 0x00ffcc, 0.2, 0.1
+                    );
+                    scene.add(arrow);
+                    arrows.push(arrow);
+                }
+            }
+        }
+
+        function updateField() {
+            const q1 = parseFloat(document.getElementById('q1').value);
+            const q2 = parseFloat(document.getElementById('q2').value);
+            
+            // Move charges in a small circle for visual interest
+            const time = Date.now() * 0.001;
+            pCharge.position.set(Math.cos(time)*4, 0, Math.sin(time)*4);
+            nCharge.position.set(-Math.cos(time)*4, 0, -Math.sin(time)*4);
+
+            arrows.forEach(arrow => {
+                const pos = arrow.position;
+                
+                // Calculate E vector from Q1
+                const r1 = new THREE.Vector3().subVectors(pos, pCharge.position);
+                const dist1Sq = r1.lengthSq() + 0.5;
+                const e1 = r1.normalize().multiplyScalar(q1 / dist1Sq);
+
+                // Calculate E vector from Q2
+                const r2 = new THREE.Vector3().subVectors(pos, nCharge.position);
+                const dist2Sq = r2.lengthSq() + 0.5;
+                const e2 = r2.normalize().multiplyScalar(q2 / dist2Sq);
+
+                // Total E = E1 + E2
+                const eTotal = new THREE.Vector3().addVectors(e1, e2);
+                const mag = eTotal.length();
+                
+                arrow.setDirection(eTotal.normalize());
+                arrow.setLength(Math.min(mag * 2, 1.5), 0.2, 0.1);
+                arrow.line.material.color.setHSL(0.5 + Math.min(mag, 0.5), 1, 0.5);
+            });
+        }
+
+        function narrate() {
+            window.speechSynthesis.cancel();
+            const speech = new SpeechSynthesisUtterance(
+                "Electric field lines are the map of electrical force. " +
+                "They start on positive charges and end on negative ones. " +
+                "The closer the arrows are to each other, the stronger the field. " +
+                "Notice how they never cross! This is because at any single point, " +
+                "there can only be one net direction for the electric force."
+            );
+            window.speechSynthesis.speak(speech);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateField();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

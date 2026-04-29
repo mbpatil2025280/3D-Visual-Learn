@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Communication and Mass Media</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    font-family: Arial;
+    color: white;
+}
+
+#title {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 26px;
+}
+
+#info {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 360px;
+    padding: 15px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 10px;
+}
+
+button {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    padding: 10px;
+    background: #00ccff;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="title">📡 Communication and Mass Media</div>
+<div id="info">Loading...</div>
+<button onclick="playVoice()">🔊 Play Voice</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// Scene
+let scene = new THREE.Scene();
+
+// Camera
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 22;
+
+// Renderer
+let renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Lights
+let light = new THREE.PointLight(0xffffff, 2, 200);
+light.position.set(20,20,20);
+scene.add(light);
+
+let ambient = new THREE.AmbientLight(0x404040, 2);
+scene.add(ambient);
+
+// Ground
+let ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(100,100),
+    new THREE.MeshStandardMaterial({ color: 0x222222 })
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -6;
+scene.add(ground);
+
+// Human (Sender)
+let senderBody = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.5,1.5,6,32),
+    new THREE.MeshStandardMaterial({ color: 0x8888ff })
+);
+senderBody.position.set(-8,0,0);
+scene.add(senderBody);
+
+let senderHead = new THREE.Mesh(
+    new THREE.SphereGeometry(1.2,32,32),
+    new THREE.MeshStandardMaterial({ color: 0xffcc99 })
+);
+senderHead.position.set(-8,4,0);
+scene.add(senderHead);
+
+// Human (Receiver)
+let receiverBody = senderBody.clone();
+receiverBody.position.set(8,0,0);
+scene.add(receiverBody);
+
+let receiverHead = senderHead.clone();
+receiverHead.position.set(8,4,0);
+scene.add(receiverHead);
+
+// Mobile phone
+let phone = new THREE.Mesh(
+    new THREE.BoxGeometry(2,3,0.3),
+    new THREE.MeshStandardMaterial({ color: 0x111111 })
+);
+phone.position.set(-6,1,1);
+scene.add(phone);
+
+// TV
+let tv = new THREE.Mesh(
+    new THREE.BoxGeometry(5,3,0.5),
+    new THREE.MeshStandardMaterial({ color: 0x000000 })
+);
+tv.position.set(0,2,-2);
+scene.add(tv);
+
+// Laptop
+let laptop = new THREE.Mesh(
+    new THREE.BoxGeometry(3,2,0.3),
+    new THREE.MeshStandardMaterial({ color: 0x333333 })
+);
+laptop.position.set(5,1,1);
+scene.add(laptop);
+
+// Signal waves
+let signals = [];
+for(let i=0;i<20;i++){
+    let s = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2,16,16),
+        new THREE.MeshStandardMaterial({ color: 0x00ffff })
+    );
+    scene.add(s);
+    signals.push(s);
+}
+
+// Globe (global communication)
+let earthTexture = new THREE.TextureLoader().load(
+'https://threejs.org/examples/textures/land_ocean_ice_cloud_2048.jpg'
+);
+
+let earth = new THREE.Mesh(
+    new THREE.SphereGeometry(3,64,64),
+    new THREE.MeshStandardMaterial({ map: earthTexture })
+);
+earth.position.set(0,-2,6);
+scene.add(earth);
+
+// Text content
+let info = document.getElementById("info");
+
+let steps = [
+"Communication means sharing information between people.",
+"It can be done through speaking, writing or signals.",
+"Mass media includes TV, radio, newspapers and internet.",
+"Mobile phones help us communicate instantly.",
+"The internet connects people all over the world.",
+"Mass media spreads news, education and entertainment.",
+"Communication plays an important role in our daily life."
+];
+
+let index = 0;
+
+// Voice
+function speak(text){
+    let speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 0.9;
+    speech.pitch = 1;
+    speechSynthesis.speak(speech);
+}
+
+function playVoice(){
+    speak(steps[index]);
+}
+
+// Animation
+function animate(){
+    requestAnimationFrame(animate);
+
+    let t = Date.now()*0.002;
+
+    // Earth rotation
+    earth.rotation.y += 0.002;
+
+    // Signal movement (sender → receiver)
+    signals.forEach((s,i)=>{
+        let progress = (t + i*0.1) % 1;
+        s.position.x = -6 + progress*12;
+        s.position.y = 2 + Math.sin(progress*6)*1.5;
+        s.position.z = Math.cos(progress*6)*1;
+    });
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Change text
+setInterval(()=>{
+    index++;
+    if(index >= steps.length) index = 0;
+
+    info.innerHTML = steps[index];
+    speak(steps[index]);
+
+}, 6000);
+
+// Resize
+window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Initial text
+info.innerHTML = steps[0];
+
+</script>
+
+</body>
+</html>

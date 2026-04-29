@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome | 3D Visual Learning</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00f2fe">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #00f2fe;
+      --accent2: #4facfe;
+      --bg: #020617;
+      --glass: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: #e6f2f7;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* =============================================
+       PHASE 1: OS BOOT SCREEN
+    ============================================= */
+    #boot-screen {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    /* Scanlines effect overlay */
+    #boot-screen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .boot-logo {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(1.5rem, 4vw, 2.8rem);
+      color: var(--accent);
+      text-shadow: 0 0 30px var(--accent), 0 0 60px rgba(0,242,254,0.4);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      animation: flickerIn 0.5s ease both;
+      position: relative;
+      z-index: 2;
+    }
+
+    @keyframes flickerIn {
+      0%  { opacity: 0; }
+      20% { opacity: 1; }
+      40% { opacity: 0.5; }
+      60% { opacity: 1; }
+      80% { opacity: 0.7; }
+      100%{ opacity: 1; }
+    }
+
+    /* Terminal log area */
+    .boot-log {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(0.65rem, 2vw, 0.85rem);
+      color: #4ade80;
+      width: min(600px, 90vw);
+      height: 180px;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+      margin-bottom: 30px;
+    }
+
+    .boot-log-line {
+      line-height: 1.8;
+      opacity: 0;
+      animation: logAppear 0.2s ease forwards;
+    }
+
+    @keyframes logAppear {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .log-ok   { color: #4ade80; }
+    .log-info { color: #60a5fa; }
+    .log-warn { color: #fbbf24; }
+    .log-accent { color: var(--accent); }
+
+    /* Boot progress bar */
+    .boot-progress-wrap {
+      width: min(600px, 90vw);
+      position: relative;
+      z-index: 2;
+    }
+
+    .boot-progress-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .boot-track {
+      height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid rgba(0,242,254,0.2);
+    }
+
+    .boot-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      border-radius: 99px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 12px rgba(0,242,254,0.7);
+    }
+
+    /* Blinking cursor */
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 1em;
+      background: var(--accent);
+      margin-left: 4px;
+      vertical-align: text-bottom;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* Boot → Welcome transition */
+    .boot-fade-out {
+      animation: bootFade 0.8s ease forwards !important;
+    }
+
+    @keyframes bootFade {
+      to { opacity: 0; pointer-events: none; }
+    }
+
+    /* =============================================
+       PHASE 2: WELCOME SCREEN
+    ============================================= */
+    #welcome-screen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top left, #0f172a, #020617);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+
+    #welcome-screen.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Glow blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      animation: pulse 5s ease-in-out infinite;
+    }
+
+    .blob-1 { width: 400px; height: 400px; background: rgba(0,242,254,0.07); top:-100px; left:-100px; }
+    .blob-2 { width: 300px; height: 300px; background: rgba(79,172,254,0.07); bottom:-80px; right:-80px; animation-delay:2.5s; }
+
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.25); }
+    }
+
+    /* Particles */
+    .particle {
+      position: fixed;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0;
+      animation: floatUp 7s infinite ease-in-out;
+    }
+
+    @keyframes floatUp {
+      0%   { opacity: 0; transform: translateY(100vh) scale(0); }
+      10%  { opacity: 0.5; }
+      90%  { opacity: 0.1; }
+      100% { opacity: 0; transform: translateY(-10vh) scale(1.2); }
+    }
+
+    /* Card */
+    .welcome-card {
+      position: relative;
+      z-index: 10;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: clamp(35px, 6vw, 65px) clamp(30px, 8vw, 75px);
+      max-width: 700px;
+      width: 92%;
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.55), 0 0 60px rgba(0,242,254,0.05);
+      text-align: center;
+      animation: cardIn 1s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    @keyframes cardIn {
+      from { opacity:0; transform: scale(0.85) translateY(50px); }
+      to   { opacity:1; transform: scale(1)   translateY(0);     }
+    }
+
+    .logo-icon {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 18px;
+      animation: bounce 2.5s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-12px); }
+    }
+
+    .app-name {
+      font-size: clamp(1.8rem, 4vw, 2.7rem);
+      font-weight: 900;
+      background: linear-gradient(to right, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 18px rgba(0,242,254,0.45));
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+
+    .tagline {
+      font-size: 1rem;
+      font-weight: 300;
+      color: #94a3b8;
+      margin-bottom: 35px;
+      line-height: 1.8;
+    }
+
+    .divider {
+      width: 55px; height: 3px;
+      background: linear-gradient(to right, var(--accent), var(--accent2));
+      border-radius: 99px;
+      margin: 0 auto 35px auto;
+    }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 45px;
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,242,254,0.07);
+      border: 1px solid rgba(0,242,254,0.2);
+      border-radius: 50px;
+      padding: 9px 18px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .pill:hover {
+      background: rgba(0,242,254,0.15);
+      transform: translateY(-2px);
+    }
+
+    .progress-wrap { margin-bottom: 18px; }
+
+    .progress-label {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 9px;
+    }
+
+    .progress-track {
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, var(--accent), var(--accent2));
+      border-radius: 99px;
+      transition: width 5s linear;
+      box-shadow: 0 0 10px rgba(0,242,254,0.6);
+    }
+
+    .skip-link {
+      font-size: 0.82rem;
+      color: #475569;
+      margin-top: 12px;
+    }
+
+    .skip-link a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .skip-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ PHASE 1: BOOT SCREEN ═══════════ -->
+  <div id="boot-screen">
+    <div class="boot-logo">3D Visual Learn <span class="cursor"></span></div>
+
+    <div class="boot-log" id="bootLog"></div>
+
+    <div class="boot-progress-wrap">
+      <div class="boot-progress-label">
+        <span>SYSTEM INIT</span>
+        <span id="bootPct">0%</span>
+      </div>
+      <div class="boot-track">
+        <div class="boot-fill" id="bootFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PHASE 2: WELCOME SCREEN ═══════════ -->
+  <div id="welcome-screen">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div id="particles"></div>
+
+    <div class="welcome-card">
+      <span class="logo-icon">🎓</span>
+      <h1 class="app-name">Welcome to<br>3D Visual Learn!</h1>
+      <p class="tagline">
+        Immersive 3D animations and visual storytelling<br>
+        that make complex topics <strong>easier to grasp</strong>.
+      </p>
+
+      <div class="divider"></div>
+
+      <div class="features">
+        <div class="pill">🎮 3D Animated Lessons</div>
+        <div class="pill">🕹️ Interactive Controls</div>
+        <div class="pill">💡 Visual Explanations</div>
+        <div class="pill">🚀 Engaging Experience</div>
+      </div>
+
+      <div class="progress-wrap">
+        <p class="progress-label">Taking you to your Dashboard...</p>
+        <div class="progress-track">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+      </div>
+
+      <p class="skip-link">Not redirecting? <a href="register.html">Click here</a></p>
+    </div>
+  </div>
+
+  <script>
+    // ─── Boot log lines ───────────────────────────────────────
+    const logs = [
+      { text: '[  OK  ] Starting kernel...',          cls: 'log-ok',     delay: 200  },
+      { text: '[  OK  ] Initializing display driver', cls: 'log-ok',     delay: 600  },
+      { text: '[ INFO ] Loading 3D engine modules',   cls: 'log-info',   delay: 1000 },
+      { text: '[  OK  ] Mounting visual assets...',   cls: 'log-ok',     delay: 1350 },
+      { text: '[ INFO ] Connecting to servers...',    cls: 'log-info',   delay: 1700 },
+      { text: '[  OK  ] Database: visual_learning',   cls: 'log-ok',     delay: 2000 },
+      { text: '[ WARN ] Checking display config...',  cls: 'log-warn',   delay: 2300 },
+      { text: '[  OK  ] 3D renderer ready',           cls: 'log-ok',     delay: 2650 },
+      { text: '[ INFO ] Loading user session...',     cls: 'log-info',   delay: 3000 },
+      { text: '[  OK  ] Authentication verified ✓',   cls: 'log-accent', delay: 3350 },
+      { text: '[  OK  ] System Boot Complete. Redirecting…', cls: 'log-ok',     delay: 3700 },
+    ];
+
+    // Progress bar milestones matching log timing
+    const milestones = [5,15,25,38,50,60,68,78,87,95,100];
+
+    const logContainer = document.getElementById('bootLog');
+    const fillBar       = document.getElementById('bootFill');
+    const pctLabel      = document.getElementById('bootPct');
+
+    logs.forEach((log, i) => {
+      setTimeout(() => {
+        const line = document.createElement('div');
+        line.className = `boot-log-line ${log.cls}`;
+        line.textContent = log.text;
+        logContainer.appendChild(line);
+        logContainer.scrollTop = logContainer.scrollHeight;
+
+        const pct = milestones[i];
+        fillBar.style.width = pct + '%';
+        pctLabel.textContent = pct + '%';
+      }, log.delay);
+    });
+
+    // ─── Switch from boot → welcome screen at 4.2s ────────────
+    const BOOT_DURATION = 4300;
+    const WELCOME_STAY  = 5500;
+
+    setTimeout(() => {
+      document.getElementById('boot-screen').classList.add('boot-fade-out');
+
+      setTimeout(() => {
+        document.getElementById('boot-screen').style.display = 'none';
+
+        const welcome = document.getElementById('welcome-screen');
+        welcome.classList.add('visible');
+
+        // Start dashboard progress bar
+        setTimeout(() => {
+          document.getElementById('progressBar').style.width = '100%';
+        }, 100);
+
+        // Spawn particles
+        const pContainer = document.getElementById('particles');
+        for (let i = 0; i < 28; i++) {
+          const p = document.createElement('div');
+          p.className = 'particle';
+          const size = Math.random() * 5 + 2;
+          p.style.cssText = `
+            width:${size}px; height:${size}px;
+            left:${Math.random()*100}%;
+            animation-delay:${Math.random()*7}s;
+            animation-duration:${Math.random()*4+6}s;
+            opacity:${Math.random()*0.4};
+          `;
+          pContainer.appendChild(p);
+        }
+
+        // Redirect to registration page after welcome screen
+        setTimeout(() => {
+          window.location.href = 'register.html';
+        }, WELCOME_STAY);
+
+      }, 800);
+    }, BOOT_DURATION);
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+
+</body>
+</html>

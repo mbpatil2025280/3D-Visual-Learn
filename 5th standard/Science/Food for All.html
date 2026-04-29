@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food for All: 3D Agriculture Lesson</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; }
+        #ui-container {
+            position: absolute; top: 30px; left: 30px; color: white;
+            background: rgba(15, 45, 15, 0.85); padding: 25px; border-radius: 20px;
+            max-width: 400px; border: 2px solid #2ecc71; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px); z-index: 100;
+        }
+        h1 { margin: 0 0 10px 0; color: #2ecc71; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+        p { line-height: 1.6; font-size: 15px; color: #e0e0e0; }
+        .btn-start {
+            background: #27ae60; border: none; padding: 12px 25px; color: white;
+            border-radius: 30px; cursor: pointer; font-weight: bold; font-size: 16px;
+            transition: 0.3s; margin-top: 15px; width: 100%;
+        }
+        .btn-start:hover { background: #2ecc71; transform: scale(1.05); }
+        #loading { position: fixed; width: 100%; height: 100%; background: #111; color: white; display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+<div id="loading">🚀 Preparing 3D Farm Environment...</div>
+
+<div id="ui-container">
+    <h1>Food for All</h1>
+    <p id="description">Explore how modern agriculture ensures food security. Witness the growth of crops and sustainable energy in action.</p>
+    <button class="btn-start" onclick="runLesson()">START INTERACTIVE LESSON</button>
+</div>
+
+<script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+    import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+
+    let scene, camera, renderer, controls, crops = [], turbine;
+
+    function init() {
+        // --- SCENE SETUP ---
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB); 
+        scene.fog = new THREE.Fog(0x87CEEB, 20, 150);
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+        camera.position.set(40, 30, 60);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // --- LIGHTING ---
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+        scene.add(hemiLight);
+
+        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+        sun.position.set(50, 50, 10);
+        sun.castShadow = true;
+        scene.add(sun);
+
+        // --- ENVIRONMENT: THE SOIL ---
+        const groundGeo = new THREE.CircleGeometry(100, 32);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x3d2b1f });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // --- REAL-WORLD OBJECT 1: THE WIND TURBINE ---
+        turbine = new THREE.Group();
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 25), new THREE.MeshStandardMaterial({color: 0xcccccc}));
+        pole.position.y = 12.5;
+        turbine.add(pole);
+
+        const hub = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshStandardMaterial({color: 0xffffff}));
+        hub.position.y = 25;
+        turbine.add(hub);
+
+        const bladeGroup = new THREE.Group();
+        bladeGroup.position.y = 25;
+        for(let i=0; i<3; i++) {
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.5, 10, 0.2), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            blade.position.y = 5;
+            const pivot = new THREE.Group();
+            pivot.rotation.z = (i * Math.PI * 2) / 3;
+            pivot.add(blade);
+            bladeGroup.add(pivot);
+        }
+        turbine.add(bladeGroup);
+        turbine.position.set(-20, 0, -20);
+        scene.add(turbine);
+        turbine.userData.blades = bladeGroup;
+
+        // --- REAL-WORLD OBJECT 2: THE CROPS (WHEAT) ---
+        const createCrop = (x, z) => {
+            const cropGroup = new THREE.Group();
+            const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 4), new THREE.MeshStandardMaterial({color: 0xffd700}));
+            stalk.position.y = 2;
+            cropGroup.add(stalk);
+            
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), new THREE.MeshStandardMaterial({color: 0xeebb00}));
+            head.position.y = 4;
+            cropGroup.add(head);
+
+            cropGroup.position.set(x, 0, z);
+            cropGroup.scale.set(0.1, 0.1, 0.1); // Start small for "growth" animation
+            scene.add(cropGroup);
+            crops.push(cropGroup);
+        };
+
+        // Plant a grid of crops
+        for(let i=0; i<8; i++) {
+            for(let j=0; j<8; j++) {
+                createCrop(i*4 - 15, j*4 - 10);
+            }
+        }
+
+        // --- CONTROLS ---
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        document.getElementById('loading').style.display = 'none';
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // Turbine rotation
+        turbine.userData.blades.rotation.z += 0.05;
+        
+        // Gentle wind sway for crops
+        crops.forEach((crop, index) => {
+            crop.rotation.x = Math.sin(Date.now() * 0.002 + index) * 0.1;
+        });
+
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    window.runLesson = function() {
+        const text = "To provide food for all, we must combine sustainable energy with efficient farming. Notice the wind turbine generating clean power, while our crops grow using precision irrigation. With these technologies, we can feed the world without harming the planet.";
+        
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.rate = 1.0;
+        window.speechSynthesis.speak(speech);
+
+        // Animation: Grow the crops!
+        crops.forEach((crop, i) => {
+            setTimeout(() => {
+                gsap.to(crop.scale, { x: 1, y: 1.5, z: 1, duration: 2, ease: "back.out(1.7)" });
+            }, i * 50);
+        });
+
+        // Move camera to a 'tour' view
+        gsap.to(camera.position, { x: 10, y: 10, z: 30, duration: 4 });
+        document.getElementById('description').innerText = "Crops are growing! Modern agriculture uses 70% less water through smart systems.";
+    };
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+
+</body>
+</html>

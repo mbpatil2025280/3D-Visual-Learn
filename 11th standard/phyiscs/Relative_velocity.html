@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Relative Velocity Lab</title>
+    <style>
+        :root { --road: #334155; --car1: #ef4444; --car2: #3b82f6; }
+        body { margin: 0; background: #0f172a; color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #475569; }
+        .controls { margin: 15px; display: flex; gap: 10px; }
+        button { padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #3b82f6; color: white; transition: 0.3s; }
+        button:hover { background: #2563eb; }
+        .stats { font-family: monospace; color: #fbbf24; font-size: 1.2rem; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="ui">
+        <h1>Relative Velocity Simulation</h1>
+        <p>Observe Car A from the perspective of Car B. When they move at the same speed, they appear stationary relative to each other!</p>
+        <div class="controls">
+            <button onclick="setMode('ground')">🌍 Ground View</button>
+            <button onclick="setMode('carB')">🚗 View from Blue Car</button>
+            <button style="background:#10b981" onclick="playLesson()">🔊 Explain Math</button>
+        </div>
+        <div class="stats" id="data">Velocity of Red relative to Blue: 0 m/s</div>
+    </div>
+    <canvas id="relCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('relCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 300;
+
+    let mode = 'ground';
+    let carA = { x: 100, v: 5, color: '#ef4444', label: 'Car A' };
+    let carB = { x: 100, v: 3, color: '#3b82f6', label: 'Car B' };
+
+    function setMode(m) { mode = m; }
+
+    function playLesson() {
+        const vRel = carA.v - carB.v;
+        const msg = new SpeechSynthesisUtterance(`To find the relative velocity, we subtract the velocity of the observer from the velocity of the object. Since Car A is moving at 5 and Car B at 3, the relative velocity is 2 meters per second. This is why Car A slowly pulls away from Car B.`);
+        window.speechSynthesis.speak(msg);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Calculate relative values
+        let vRel = carA.v - carB.v;
+        document.getElementById('data').innerText = `Velocity of A relative to B: ${vRel} m/s`;
+
+        // Draw Road
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(0, 100, 800, 150);
+        ctx.setLineDash([20, 20]);
+        ctx.strokeStyle = 'white';
+        ctx.beginPath(); ctx.moveTo(0, 175); ctx.lineTo(800, 175); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Physics Logic
+        if (mode === 'ground') {
+            carA.x += carA.v;
+            carB.x += carB.v;
+        } else {
+            // In Car B's frame, Car B is "stationary"
+            carA.x += vRel;
+            // Background and Car B would appear to move if we added scenery
+        }
+
+        // Loop cars
+        if (carA.x > 850) carA.x = -50;
+        if (carB.x > 850) carB.x = -50;
+
+        // Draw Cars
+        drawCar(carA.x, 120, carA.color, carA.label);
+        if (mode === 'ground') {
+            drawCar(carB.x, 200, carB.color, carB.label);
+        } else {
+            drawCar(400, 200, carB.color, "Observer (B)");
+        }
+
+        requestAnimationFrame(draw);
+    }
+
+    function drawCar(x, y, color, label) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, 60, 30);
+        ctx.fillStyle = 'white';
+        ctx.fillText(label, x + 10, y - 5);
+        // Wheels
+        ctx.fillStyle = 'black';
+        ctx.beginPath(); ctx.arc(x + 15, y + 30, 7, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + 45, y + 30, 7, 0, Math.PI*2); ctx.fill();
+    }
+
+    draw();
+</script>
+</body>
+</html>

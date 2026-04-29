@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Growth & Personality Development 3D</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: radial-gradient(circle, #2c3e50, #000000); font-family: 'Segoe UI', sans-serif; }
+        
+        /* UI Positioned Down Side, Right Aligned as requested */
+        #ui-panel {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            width: 350px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-align: right; /* Right align text */
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 22px; color: #2ecc71; text-transform: uppercase; }
+        p { font-size: 14px; line-height: 1.5; color: #ccc; margin: 15px 0; }
+        
+        button {
+            background: #2ecc71;
+            border: none;
+            padding: 12px 25px;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            float: right; /* Keep button right */
+        }
+        button:hover { background: #27ae60; transform: scale(1.05); }
+        
+        #stats { font-style: italic; color: #f1c40f; margin-top: 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div id="ui-panel">
+    <h1>Personal Growth</h1>
+    <p id="message">Your personality is like a tree. It requires deep roots of values and constant sunlight of knowledge to reach its full potential.</p>
+    <button onclick="evolvePersonality()">EVOLVE MYSELF</button>
+    <div style="clear:both;"></div>
+    <div id="stats">Current Stage: Seedling</div>
+</div>
+
+<script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+    import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+
+    let scene, camera, renderer, tree, leaves = [];
+    let growthStage = 0;
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 10, 30);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(10, 20, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040, 2));
+
+        // The "Self" Tree Structure
+        tree = new THREE.Group();
+        
+        // Trunk (Real-world organic cylinder)
+        const trunkGeo = new THREE.CylinderGeometry(0.5, 1, 15, 8);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        trunk.position.y = 7.5;
+        tree.add(trunk);
+
+        // Leaves (Representing personality traits)
+        const leafGeo = new THREE.IcosahedronGeometry(1, 0);
+        const leafMat = new THREE.MeshStandardMaterial({ color: 0x27ae60 });
+
+        for(let i=0; i<40; i++) {
+            const leaf = new THREE.Mesh(leafGeo, leafMat);
+            leaf.position.set(
+                (Math.random() - 0.5) * 8,
+                15 + (Math.random() - 0.5) * 8,
+                (Math.random() - 0.5) * 8
+            );
+            leaf.scale.set(0, 0, 0); // Start invisible
+            tree.add(leaf);
+            leaves.push(leaf);
+        }
+
+        tree.scale.set(0.1, 0.1, 0.1); // Initial state
+        scene.add(tree);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.autoRotate = true;
+        
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    window.evolvePersonality = function() {
+        growthStage++;
+        let status = "";
+        let speechText = "";
+
+        if(growthStage === 1) {
+            status = "Stage: Developing Confidence";
+            speechText = "Confidence is the foundation. You are beginning to stand tall and firm in your beliefs.";
+            gsap.to(tree.scale, { x: 0.5, y: 0.5, z: 0.5, duration: 2 });
+        } else if(growthStage === 2) {
+            status = "Stage: Resilience & Skills";
+            speechText = "Resilience allows you to weather any storm. Your skills are now beginning to branch out.";
+            gsap.to(tree.scale, { x: 1, y: 1, z: 1, duration: 2 });
+            leaves.slice(0, 20).forEach(l => gsap.to(l.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 1 }));
+        } else {
+            status = "Stage: Fully Developed Personality";
+            speechText = "You have reached a peak state of self-awareness. You are now capable of helping others grow.";
+            leaves.forEach(l => gsap.to(l.scale, { x: 2, y: 2, z: 2, duration: 1.5 }));
+            gsap.to(camera.position, { z: 50, duration: 3 });
+        }
+
+        document.getElementById('stats').innerText = status;
+        document.getElementById('message').innerText = speechText;
+
+        // Sound Output
+        const msg = new SpeechSynthesisUtterance(speechText);
+        window.speechSynthesis.speak(msg);
+    };
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+
+</body>
+</html>

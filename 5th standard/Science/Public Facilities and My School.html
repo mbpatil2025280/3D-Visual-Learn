@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Public Facilities & My School 3D</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #eef2f3; font-family: 'Segoe UI', sans-serif; }
+        
+        /* UI Panel: Bottom-Right & Right-Aligned */
+        #ui-panel {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 420px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            color: #2c3e50;
+            text-align: right; 
+            border-radius: 20px;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-bottom: 6px solid #3498db;
+        }
+
+        h1 { margin: 0; font-size: 22px; color: #2980b9; text-transform: uppercase; }
+        p { font-size: 14px; line-height: 1.6; color: #555; margin: 15px 0; }
+        
+        button {
+            background: #3498db;
+            border: none;
+            padding: 12px 25px;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            float: right;
+        }
+        button:hover { background: #2980b9; transform: scale(1.05); }
+        #tag { font-size: 11px; font-weight: bold; color: #7f8c8d; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="ui-panel">
+    <h1>Our School Facility</h1>
+    <p id="info">Public facilities are essential services provided to all citizens. A school provides the 'Right to Education,' ensuring a bright future for every child regardless of their background.</p>
+    <button onclick="inspectSchool()">INSPECT FACILITY</button>
+    <div style="clear:both;"></div>
+    <div id="tag">Infrastructure Status: 100% Operational</div>
+</div>
+
+<script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+    import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
+
+    let scene, camera, renderer, schoolGroup;
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb); // Bright Sky
+        scene.fog = new THREE.Fog(0x87ceeb, 50, 150);
+
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(40, 30, 50);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambient);
+        const sun = new THREE.DirectionalLight(0xffffff, 1);
+        sun.position.set(50, 50, 20);
+        scene.add(sun);
+
+        // Ground/Playground
+        const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({color: 0x27ae60}));
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        // --- REAL WORLD OBJECT: THE SCHOOL BUILDING ---
+        schoolGroup = new THREE.Group();
+        
+        // Main Wing
+        const body = new THREE.Mesh(new THREE.BoxGeometry(25, 12, 12), new THREE.MeshStandardMaterial({color: 0xecf0f1}));
+        body.position.y = 6;
+        schoolGroup.add(body);
+
+        // Windows (Grid pattern)
+        const winGeo = new THREE.BoxGeometry(1.5, 2, 0.2);
+        const winMat = new THREE.MeshStandardMaterial({color: 0x3498db});
+        for(let i=0; i<4; i++) {
+            for(let j=0; j<2; j++) {
+                const w = new THREE.Mesh(winGeo, winMat);
+                w.position.set(-9 + (i*6), 4 + (j*4), 6.1);
+                schoolGroup.add(w);
+            }
+        }
+
+        // Public Facility: SOLAR PANELS (Sustainability)
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(10, 0.2, 5), new THREE.MeshStandardMaterial({color: 0x2c3e50}));
+        panel.position.set(0, 12.2, 0);
+        panel.rotation.x = -0.2;
+        schoolGroup.add(panel);
+
+        // Public Facility: WATER TANK
+        const tank = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 4), new THREE.MeshStandardMaterial({color: 0x95a5a6}));
+        tank.position.set(-8, 14, -3);
+        schoolGroup.add(tank);
+
+        scene.add(schoolGroup);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    window.inspectSchool = function() {
+        const text = "A school is more than just a building; it is a vital public facility. It utilizes shared resources like the municipal water supply, the power grid, and government funding to provide education for all. Protecting our school property is a civic duty because it belongs to the entire community.";
+        
+        const speech = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(speech);
+
+        gsap.to(camera.position, { x: 15, y: 15, z: 25, duration: 3 });
+        document.getElementById('info').innerText = "Facility Insight: Schools are funded by taxes to ensure the 'Right to Education' is met for every citizen.";
+    };
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+</body>
+</html>

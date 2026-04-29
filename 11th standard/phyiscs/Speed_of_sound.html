@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Speed of Sound Lab</title>
+    <style>
+        :root { --accent: #06b6d4; --bg: #0f172a; }
+        body { margin: 0; background: var(--bg); color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 2px solid #334155; }
+        .controls { margin-top: 15px; display: flex; gap: 15px; }
+        button { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { filter: brightness(1.1); transform: scale(1.05); }
+        .active { outline: 3px solid white; }
+    </style>
+</head>
+<body>
+
+<div class="ui">
+    <h1>Speed of Sound Visualization</h1>
+    <p>Select a medium to see how particle density affects wave speed.</p>
+    
+    <div class="controls">
+        <button onclick="setMedium('gas', this)">Gas (Slow)</button>
+        <button onclick="setMedium('solid', this)" class="active">Solid (Fast)</button>
+        <button style="background:#8b5cf6" onclick="playLesson()">🔊 Start Lesson</button>
+    </div>
+</div>
+
+<canvas id="soundCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('soundCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 300;
+
+    let particles = [];
+    let mediumType = 'solid';
+    let wavePos = 0;
+    let waveSpeed = 8;
+
+    function setMedium(type, btn) {
+        mediumType = type;
+        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        waveSpeed = (type === 'solid') ? 8 : 2;
+        initParticles();
+    }
+
+    function initParticles() {
+        particles = [];
+        const gap = (mediumType === 'solid') ? 20 : 60;
+        for(let x = 50; x < 750; x += gap) {
+            for(let y = 50; y < 250; y += 40) {
+                particles.push({ x: x, y: y, originalX: x });
+            }
+        }
+    }
+
+    function playLesson() {
+        const text = mediumType === 'solid' ? 
+            "In a solid, particles are tightly packed. When one moves, it hits its neighbor immediately, making sound travel extremely fast." :
+            "In a gas, particles are far apart. The wave must wait for molecules to travel across empty space to collide, which slows down the speed of sound.";
+        window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        wavePos += waveSpeed;
+        if (wavePos > 900) wavePos = 0;
+
+        particles.forEach(p => {
+            // Particle oscillation logic
+            let dist = Math.abs(p.x - wavePos);
+            let offset = 0;
+            if (dist < 50) {
+                offset = Math.sin((dist / 50) * Math.PI) * 15;
+            }
+            
+            ctx.fillStyle = dist < 50 ? '#fbbf24' : '#64748b';
+            ctx.beginPath();
+            ctx.arc(p.originalX + offset, p.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Draw Wave Front Label
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.2)';
+        ctx.fillRect(wavePos - 20, 0, 40, 300);
+
+        requestAnimationFrame(draw);
+    }
+
+    initParticles();
+    draw();
+</script>
+</body>
+</html>

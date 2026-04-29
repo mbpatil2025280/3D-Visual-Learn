@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Settled Life & Urban Civilization - 3D Learning</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        background: black;
+    }
+
+    #infoBox {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 350px;
+        padding: 15px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border-radius: 10px;
+        font-size: 16px;
+    }
+
+    #title {
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        color: white;
+        font-size: 28px;
+    }
+
+    button {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 15px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        background: orange;
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="title">🌆 Urban Civilization 3D Learning</div>
+<div id="infoBox">Click Start to Begin Learning</div>
+<button onclick="startLearning()">Start</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+let scene, camera, renderer;
+let buildings = [];
+let step = 0;
+
+const texts = [
+    "Early humans were nomadic. They moved from place to place.",
+    "With time, humans started settled life near rivers.",
+    "Agriculture developed. People started farming.",
+    "Villages were formed. Community living began.",
+    "Urban civilization emerged with cities and buildings.",
+    "Trade, transport, and culture developed in cities."
+];
+
+init();
+animate();
+
+function init() {
+
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(
+        75, window.innerWidth / window.innerHeight, 0.1, 1000
+    );
+    camera.position.set(0, 5, 15);
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Light
+    const light = new THREE.PointLight(0xffffff, 1);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+
+    const ambient = new THREE.AmbientLight(0x404040);
+    scene.add(ambient);
+
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(50, 50);
+    const groundMat = new THREE.MeshStandardMaterial({color: 0x228B22});
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
+
+    // Create Buildings
+    for (let i = 0; i < 20; i++) {
+        const geometry = new THREE.BoxGeometry(
+            Math.random() * 2 + 1,
+            Math.random() * 6 + 2,
+            Math.random() * 2 + 1
+        );
+
+        const material = new THREE.MeshStandardMaterial({
+            color: Math.random() * 0xffffff
+        });
+
+        const building = new THREE.Mesh(geometry, material);
+
+        building.position.x = Math.random() * 30 - 15;
+        building.position.z = Math.random() * 30 - 15;
+        building.position.y = geometry.parameters.height / 2;
+
+        scene.add(building);
+        buildings.push(building);
+    }
+}
+
+// Animation Loop
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Rotate buildings slowly
+    buildings.forEach(b => {
+        b.rotation.y += 0.005;
+    });
+
+    // Move camera slowly
+    camera.position.x = Math.sin(Date.now() * 0.0005) * 15;
+    camera.lookAt(0,0,0);
+
+    renderer.render(scene, camera);
+}
+
+// Learning Steps
+function startLearning() {
+    nextStep();
+}
+
+// Step-wise explanation
+function nextStep() {
+    if (step < texts.length) {
+        document.getElementById("infoBox").innerText = texts[step];
+        speak(texts[step]);
+        step++;
+        setTimeout(nextStep, 6000);
+    } else {
+        document.getElementById("infoBox").innerText = "Learning Completed!";
+        speak("Learning Completed. Thank you!");
+    }
+}
+
+// Voice Narration
+function speak(text) {
+    let speech = new SpeechSynthesisUtterance();
+    speech.text = text;
+    speech.volume = 1;
+    speech.rate = 1;
+    speech.pitch = 1;
+    window.speechSynthesis.speak(speech);
+}
+
+// Resize Fix
+window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+</script>
+
+</body>
+</html>

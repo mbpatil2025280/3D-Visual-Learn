@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Constituents of Food</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    color: white;
+    font-family: Arial;
+}
+
+#title {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 26px;
+}
+
+#info {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 360px;
+    padding: 15px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 10px;
+}
+
+button {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    padding: 10px;
+    background: #ff9933;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="title">🥗 Constituents of Food</div>
+<div id="info">Loading...</div>
+<button onclick="playVoice()">🔊 Play Voice</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// Scene
+let scene = new THREE.Scene();
+
+// Camera
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.z = 25;
+
+// Renderer
+let renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Lights
+let light = new THREE.PointLight(0xffffff, 2, 200);
+light.position.set(20,20,20);
+scene.add(light);
+
+let ambient = new THREE.AmbientLight(0x404040, 2);
+scene.add(ambient);
+
+// Ground
+let ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(100,100),
+    new THREE.MeshStandardMaterial({ color: 0x222222 })
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -6;
+scene.add(ground);
+
+// Human body (effect receiver)
+let body = new THREE.Mesh(
+    new THREE.CylinderGeometry(3,3,10,64),
+    new THREE.MeshStandardMaterial({ color: 0x555555, transparent:true, opacity:0.3 })
+);
+scene.add(body);
+
+let head = new THREE.Mesh(
+    new THREE.SphereGeometry(2,32,32),
+    new THREE.MeshStandardMaterial({ color: 0xffcc99 })
+);
+head.position.y = 6;
+scene.add(head);
+
+// Food items (realistic shapes)
+function createFood(color,x,y,z,name){
+    let f = new THREE.Mesh(
+        new THREE.SphereGeometry(1.2,32,32),
+        new THREE.MeshStandardMaterial({ color: color })
+    );
+    f.position.set(x,y,z);
+    f.name = name;
+    scene.add(f);
+    return f;
+}
+
+let bread = createFood(0xffcc66,-10,0,0,"Carbohydrates");
+let meat = createFood(0xff6666,-7,1,2,"Proteins");
+let oil = createFood(0xffff66,-4,0,1,"Fats");
+let fruits = createFood(0x66ff66,0,1,-2,"Vitamins");
+let minerals = createFood(0x66ccff,4,0,0,"Minerals");
+let water = createFood(0x3399ff,7,1,2,"Water");
+
+// Nutrient particles (flow into body)
+let particles = [];
+for(let i=0;i<60;i++){
+    let p = new THREE.Mesh(
+        new THREE.SphereGeometry(0.15,8,8),
+        new THREE.MeshStandardMaterial({ color: 0xffff00 })
+    );
+    scene.add(p);
+    particles.push(p);
+}
+
+// Text
+let info = document.getElementById("info");
+
+let steps = [
+"Food provides nutrients essential for growth and energy.",
+"Carbohydrates give us energy. Found in bread, rice, cereals.",
+"Proteins help in body growth and repair. Found in meat, eggs, legumes.",
+"Fats provide concentrated energy. Found in oil, butter.",
+"Vitamins help in immunity and healthy functioning. Found in fruits and vegetables.",
+"Minerals maintain bones, teeth, and other functions. Found in milk, nuts, cereals.",
+"Water keeps us hydrated and supports all body functions."
+];
+
+let index = 0;
+
+// Voice
+function speak(text){
+    let speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 0.9;
+    speech.pitch = 1;
+    speechSynthesis.speak(speech);
+}
+
+function playVoice(){
+    speak(steps[index]);
+}
+
+// Animation
+function animate(){
+    requestAnimationFrame(animate);
+
+    let t = Date.now()*0.002;
+
+    // Particles flow from food to body
+    particles.forEach((p,i)=>{
+        let foodList = [bread, meat, oil, fruits, minerals, water];
+        let f = foodList[i % foodList.length];
+        let progress = (Math.sin(t+i) + 1)/2;
+        p.position.x = f.position.x + (body.position.x - f.position.x)*progress;
+        p.position.y = f.position.y + (body.position.y - f.position.y)*progress;
+        p.position.z = f.position.z + (body.position.z - f.position.z)*progress;
+    });
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Text change
+setInterval(()=>{
+    index++;
+    if(index >= steps.length) index = 0;
+
+    info.innerHTML = steps[index];
+    speak(steps[index]);
+
+}, 6000);
+
+// Resize
+window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Initial
+info.innerHTML = steps[0];
+
+</script>
+
+</body>
+</html>

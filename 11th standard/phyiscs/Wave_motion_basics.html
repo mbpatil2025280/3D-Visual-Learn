@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wave Motion Basics Lab</title>
+    <style>
+        :root { --accent: #f43f5e; --bg: #0f172a; }
+        body { margin: 0; background: var(--bg); color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #334155; }
+        .controls { margin-top: 15px; display: flex; gap: 20px; align-items: center; background: #1e293b; padding: 15px; border-radius: 8px; }
+        button { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { filter: brightness(1.1); transform: scale(1.05); }
+        input { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="ui">
+    <h1>Wave Motion Fundamentals</h1>
+    <p>Adjust frequency to see how wavelength changes. Higher frequency = Shorter wavelength.</p>
+    
+    <div class="controls">
+        <label>Frequency: <input type="range" id="freqRange" min="0.01" max="0.1" step="0.01" value="0.05"> <span id="freqVal">0.05</span> Hz</label>
+        <button onclick="playLesson()">🔊 Explain Properties</button>
+    </div>
+</div>
+
+<canvas id="waveCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('waveCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 300;
+
+    let time = 0;
+    const amplitude = 60;
+
+    function playLesson() {
+        const msg = new SpeechSynthesisUtterance("Notice the red dots. They only move up and down, they do not travel horizontally. This represents the particles of the medium. The wave shape itself is what moves across the screen, carrying energy from left to right.");
+        window.speechSynthesis.speak(msg);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const freq = parseFloat(document.getElementById('freqRange').value);
+        document.getElementById('freqVal').innerText = freq.toFixed(2);
+
+        // Draw Axis
+        ctx.strokeStyle = '#475569';
+        ctx.beginPath(); ctx.moveTo(0, 150); ctx.lineTo(800, 150); ctx.stroke();
+
+        // Draw Wave
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x++) {
+            const y = 150 + Math.sin(x * freq + time) * amplitude;
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Draw Particles (Representing Matter)
+        for (let x = 50; x < 800; x += 100) {
+            const y = 150 + Math.sin(x * freq + time) * amplitude;
+            ctx.fillStyle = '#f43f5e';
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Vertical track line for particles
+            ctx.setLineDash([2, 5]);
+            ctx.strokeStyle = 'rgba(244, 63, 94, 0.3)';
+            ctx.beginPath(); ctx.moveTo(x, 50); ctx.lineTo(x, 250); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        time -= 0.1;
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+</script>
+</body>
+</html>

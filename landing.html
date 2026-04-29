@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Visual Learn | Interactive Learning Platform</title>
+  <meta name="description" content="Learn smarter with immersive 3D animations. Interactive visual learning platform for students from 5th to 12th Standard.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00f2fe">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #00f2fe;
+      --accent2: #4facfe;
+      --bg: #020617;
+      --glass: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.1);
+      --text: #e6f2f7;
+      --muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #0f172a, #020617 60%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background grid ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,242,254,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,242,254,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      animation: gridDrift 20s linear infinite;
+    }
+
+    @keyframes gridDrift {
+      from { transform: translateY(0); }
+      to   { transform: translateY(60px); }
+    }
+
+    /* ── Glow blobs ── */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+      animation: blobPulse 6s ease-in-out infinite;
+    }
+    .blob-1 { width:500px; height:500px; background:rgba(0,242,254,0.08); top:-150px; left:-150px; }
+    .blob-2 { width:400px; height:400px; background:rgba(79,172,254,0.07); bottom:-100px; right:-100px; animation-delay:3s; }
+    .blob-3 { width:250px; height:250px; background:rgba(0,242,254,0.05); top:40%; left:60%; animation-delay:1.5s; }
+
+    @keyframes blobPulse {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.3); }
+    }
+
+    /* ── Floating particles ── */
+    .particle {
+      position: fixed;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0;
+      animation: floatUp 8s infinite ease-in-out;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes floatUp {
+      0%  { opacity:0; transform:translateY(100vh) scale(0); }
+      10% { opacity:0.5; }
+      90% { opacity:0.1; }
+      100%{ opacity:0; transform:translateY(-10vh) scale(1); }
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 18px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(2,6,23,0.7);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      animation: slideDown 0.8s ease both;
+    }
+
+    @keyframes slideDown {
+      from { opacity:0; transform:translateY(-20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .nav-logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      background: linear-gradient(to right, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-buttons { display: flex; gap: 12px; }
+
+    .btn-outline {
+      padding: 9px 24px;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      color: var(--accent);
+      background: transparent;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      font-family: 'Outfit', sans-serif;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .btn-outline:hover {
+      background: rgba(0,242,254,0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,242,254,0.25);
+    }
+
+    .btn-primary {
+      padding: 9px 24px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(45deg, var(--accent2), var(--accent));
+      color: #020617;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-decoration: none;
+      font-family: 'Outfit', sans-serif;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,242,254,0.4);
+      filter: brightness(1.1);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 20px 80px 20px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,242,254,0.08);
+      border: 1px solid rgba(0,242,254,0.25);
+      border-radius: 50px;
+      padding: 8px 20px;
+      font-size: 0.85rem;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 28px;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.08;
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s 0.4s ease both;
+    }
+
+    .hero-title .grad {
+      background: linear-gradient(to right, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 25px rgba(0,242,254,0.4));
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      font-weight: 300;
+      color: var(--muted);
+      max-width: 600px;
+      line-height: 1.8;
+      margin-bottom: 50px;
+      animation: fadeUp 0.8s 0.6s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(30px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.8s 0.8s ease both;
+      margin-bottom: 70px;
+    }
+
+    .btn-hero-primary {
+      padding: 16px 40px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(45deg, var(--accent2), var(--accent));
+      color: #020617;
+      text-decoration: none;
+      font-family: 'Outfit', sans-serif;
+      transition: all 0.35s ease;
+      cursor: pointer;
+    }
+
+    .btn-hero-primary:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 40px rgba(0,242,254,0.45);
+      filter: brightness(1.1);
+    }
+
+    .btn-hero-outline {
+      padding: 16px 40px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--glass);
+      color: var(--text);
+      text-decoration: none;
+      font-family: 'Outfit', sans-serif;
+      backdrop-filter: blur(10px);
+      transition: all 0.35s ease;
+      cursor: pointer;
+    }
+
+    .btn-hero-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0,242,254,0.2);
+    }
+
+    /* ── STATS ROW ── */
+    .stats {
+      display: flex;
+      gap: 50px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.8s 1s ease both;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(to right, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── FEATURES SECTION ── */
+    .section {
+      position: relative;
+      z-index: 10;
+      padding: 90px 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 60px;
+      max-width: 550px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.8;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 35px 28px;
+      backdrop-filter: blur(10px);
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+      transition: 0.5s;
+    }
+
+    .feature-card:hover::before { left: 100%; }
+
+    .feature-card:hover {
+      border-color: rgba(0,242,254,0.4);
+      background: rgba(0,242,254,0.04);
+      transform: translateY(-8px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 25px rgba(0,242,254,0.1);
+    }
+
+    .feature-icon {
+      font-size: 2.4rem;
+      margin-bottom: 18px;
+      display: block;
+    }
+
+    .feature-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── STANDARDS ROW ── */
+    .standards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+
+    .std-chip {
+      padding: 10px 20px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .std-chip:hover {
+      background: rgba(0,242,254,0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: scale(1.05);
+    }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      position: relative;
+      z-index: 10;
+      padding: 60px 20px 100px;
+      text-align: center;
+    }
+
+    .cta-box {
+      max-width: 650px;
+      margin: 0 auto;
+      background: var(--glass);
+      border: 1px solid rgba(0,242,254,0.2);
+      border-radius: 28px;
+      padding: 60px 50px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 30px 70px rgba(0,0,0,0.4), inset 0 1px 0 rgba(0,242,254,0.1);
+    }
+
+    .cta-title {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .cta-sub {
+      color: var(--muted);
+      margin-bottom: 35px;
+      line-height: 1.7;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 14px 20px; }
+      .nav-logo span { display: none; }
+      .cta-box { padding: 40px 25px; }
+      .stats { gap: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div id="particles"></div>
+
+  <!-- ════════ NAV ════════ -->
+  <nav>
+    <div class="nav-logo">🎓 <span>3D Visual Learn</span></div>
+    <div class="nav-buttons">
+      <a href="index.html" class="btn-outline">Log In</a>
+      <a href="register.html" class="btn-primary">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- ════════ HERO ════════ -->
+  <section class="hero">
+    <div class="hero-badge">🚀 India's Premium 3D Learning Platform</div>
+
+    <h1 class="hero-title">
+      Learn With<br>
+      <span class="grad">Immersive 3D</span><br>
+      Animations
+    </h1>
+
+    <p class="hero-subtitle">
+      Stop just reading theory. See real-world 3D simulations that make
+      every concept vivid, engaging, and impossible to forget.
+    </p>
+
+    <div class="hero-buttons">
+      <a href="register.html" class="btn-hero-primary">🎓 Start Learning Free</a>
+      <a href="index.html" class="btn-hero-outline">Already a member? Login</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">8+</div>
+        <div class="stat-label">Standards Covered</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3D</div>
+        <div class="stat-label">Interactive Lessons</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">₹299</div>
+        <div class="stat-label">Starting Price / Year</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Visual Learning</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ FEATURES ════════ -->
+  <section class="section">
+    <div class="section-label">Why Choose Us</div>
+    <h2 class="section-title">Everything You Need to Excel</h2>
+    <p class="section-sub">Our platform combines cutting-edge 3D technology with curriculum-aligned content for maximum learning impact.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🎮</span>
+        <div class="feature-title">3D Animated Lessons</div>
+        <div class="feature-desc">Watch scientific concepts come to life in stunning 3D. From atoms to ecosystems — see it, don't just read it.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🕹️</span>
+        <div class="feature-title">Interactive Controls</div>
+        <div class="feature-desc">Rotate, zoom, and interact with 3D models. Explore at your own pace and truly understand every detail.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💡</span>
+        <div class="feature-title">Visual Explanations</div>
+        <div class="feature-desc">Complex concepts broken down into beautiful visual simulations that stick in your memory for exams.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📱</span>
+        <div class="feature-title">Works on Any Device</div>
+        <div class="feature-desc">Fully responsive and installable as a mobile app. Learn on your phone, tablet, or laptop — anywhere, anytime.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🏆</span>
+        <div class="feature-title">Curriculum Aligned</div>
+        <div class="feature-desc">Content mapped directly to the Indian standard curriculum from 5th to 12th — exactly what you need for exams.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-title">Learn Faster</div>
+        <div class="feature-desc">Students learn up to 3x faster with visual storytelling compared to reading textbooks alone. Science-backed.</div>
+      </div>
+    </div>
+
+    <div class="standards-row">
+      <div class="std-chip">📘 5th Standard</div>
+      <div class="std-chip">📗 6th Standard</div>
+      <div class="std-chip">📙 7th Standard</div>
+      <div class="std-chip">📕 8th Standard</div>
+      <div class="std-chip">📘 9th Standard</div>
+      <div class="std-chip">📗 10th Standard</div>
+      <div class="std-chip">📙 11th Standard</div>
+      <div class="std-chip">📕 12th Standard</div>
+    </div>
+  </section>
+
+  <!-- ════════ CTA ════════ -->
+  <section class="cta-section">
+    <div class="cta-box">
+      <h2 class="cta-title">Ready to Learn Smarter? 🚀</h2>
+      <p class="cta-sub">Join thousands of students who are already mastering their curriculum with immersive 3D visual learning. Start today for free!</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+        <a href="register.html" class="btn-hero-primary">Create Free Account</a>
+        <a href="index.html" class="btn-hero-outline">Login to Account</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ FOOTER ════════ -->
+  <footer>
+    © 2025 3D Visual Learn · Explore, Interact & Learn Smarter 🌟
+  </footer>
+
+  <script>
+    // Spawn particles
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 5 + 2;
+      p.style.cssText = `
+        width:${size}px; height:${size}px;
+        left:${Math.random()*100}%;
+        animation-delay:${Math.random()*8}s;
+        animation-duration:${Math.random()*5+6}s;
+        opacity:${Math.random()*0.4};
+      `;
+      container.appendChild(p);
+    }
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+
+</body>
+</html>

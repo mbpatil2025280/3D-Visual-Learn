@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reflection of Sound Lab</title>
+    <style>
+        :root { --accent: #10b981; --bg: #0f172a; }
+        body { margin: 0; background: var(--bg); color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        .ui { padding: 20px; text-align: center; max-width: 800px; }
+        canvas { background: #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 2px solid #334155; }
+        .controls { margin-top: 15px; display: flex; gap: 20px; align-items: center; }
+        button { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        input { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="ui">
+    <h1>Reflection of Sound Simulation</h1>
+    <p>Adjust the angle of the sound source and watch how the reflected wave responds.</p>
+    
+    <div class="controls">
+        <label>Incidence Angle: <input type="range" id="angleRange" min="20" max="70" value="45"> <span id="angleVal">45</span>°</label>
+        <button onclick="startLesson()">🔊 Play Audio Lesson</button>
+    </div>
+</div>
+
+<canvas id="reflectionCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('reflectionCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 400;
+
+    let waves = [];
+    let frame = 0;
+
+    function startLesson() {
+        const angle = document.getElementById('angleRange').value;
+        const msg = new SpeechSynthesisUtterance(`Notice that the sound hits the surface at ${angle} degrees. The reflected wave bounces off at the exact same angle. This is why sound can be focused using curved surfaces in concert halls or stethoscopes.`);
+        window.speechSynthesis.speak(msg);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const angleDeg = document.getElementById('angleRange').value;
+        document.getElementById('angleVal').innerText = angleDeg;
+        const angleRad = angleDeg * Math.PI / 180;
+
+        // Draw Reflecting Surface (The Wall)
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 8;
+        ctx.beginPath(); ctx.moveTo(0, 380); ctx.lineTo(800, 380); ctx.stroke();
+
+        // Draw Normal Line
+        ctx.setLineDash([5, 10]);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(400, 100); ctx.lineTo(400, 380); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Emit new wave
+        if (frame % 30 === 0) {
+            waves.push({ r: 0, opacity: 1 });
+        }
+
+        waves.forEach((w, i) => {
+            ctx.lineWidth = 3;
+            
+            // Incident Wave (Green)
+            ctx.strokeStyle = `rgba(16, 185, 129, ${w.opacity})`;
+            ctx.beginPath();
+            ctx.arc(400 - Math.tan(angleRad) * (380 - 100), 100, w.r, angleRad - 0.2, angleRad + 0.2);
+            ctx.stroke();
+
+            // Reflected Wave (Orange)
+            if (w.r > 300) {
+                 ctx.strokeStyle = `rgba(245, 158, 11, ${w.opacity})`;
+                 ctx.beginPath();
+                 ctx.arc(400, 380, w.r - 300, -angleRad - Math.PI/2 - 0.2, -angleRad - Math.PI/2 + 0.2);
+                 ctx.stroke();
+            }
+
+            w.r += 2;
+            w.opacity -= 0.002;
+            if (w.opacity <= 0) waves.splice(i, 1);
+        });
+
+        frame++;
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>

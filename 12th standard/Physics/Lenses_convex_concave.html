@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Lens Comparison - Convex vs Concave</title>
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #ui { position: absolute; top: 20px; left: 20px; width: 280px; background: rgba(15,15,15,0.9); padding: 20px; border-radius: 15px; border: 1px solid #444; z-index: 100; }
+        .toggle-container { display: flex; gap: 10px; margin: 15px 0; }
+        .btn { flex: 1; padding: 10px; border: 1px solid #555; background: #222; color: white; cursor: pointer; border-radius: 5px; }
+        .active { background: #0072ff; border-color: #00fbff; }
+        #desc { font-size: 0.85em; color: #ccc; line-height: 1.4; background: #111; padding: 10px; border-radius: 5px; }
+        button.speak { width: 100%; margin-top: 10px; padding: 10px; background: #00fbff; color: black; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <h2 style="margin:0; font-size: 1.2em;">Lens Comparison</h2>
+        <div class="toggle-container">
+            <button class="btn active" id="btnConvex" onclick="setLens('convex')">Convex</button>
+            <button class="btn" id="btnConcave" onclick="setLens('concave')">Concave</button>
+        </div>
+        <div id="desc">Converging Lens: Parallel rays meet at the focal point.</div>
+        <button class="speak" onclick="narrate()">🔊 Hear Difference</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        camera.position.set(0, 5, 15);
+        camera.lookAt(0,0,0);
+
+        // --- Optical Elements ---
+        const lensGeo = new THREE.SphereGeometry(3, 32, 32);
+        const lensMat = new THREE.MeshPhongMaterial({ color: 0x00fbff, transparent: true, opacity: 0.4 });
+        const lens = new THREE.Mesh(lensGeo, lensMat);
+        lens.scale.set(0.1, 1, 1);
+        scene.add(lens);
+
+        const rays = new THREE.Group();
+        scene.add(rays);
+
+        let currentType = 'convex';
+
+        function setLens(type) {
+            currentType = type;
+            document.getElementById('btnConvex').className = (type === 'convex' ? 'btn active' : 'btn');
+            document.getElementById('btnConcave').className = (type === 'concave' ? 'btn active' : 'btn');
+            
+            if(type === 'convex') {
+                lens.scale.set(0.15, 1, 1); // Thick middle
+                document.getElementById('desc').innerText = "Converging Lens: Used in cameras and human eyes. It brings light to a real focus.";
+            } else {
+                lens.scale.set(-0.1, 1, 1); // Thin middle (inverted sphere)
+                document.getElementById('desc').innerText = "Diverging Lens: Used for correcting Myopia. It spreads light rays apart.";
+            }
+        }
+
+        function drawRays() {
+            rays.clear();
+            const f = currentType === 'convex' ? 6 : -6;
+            const rayCount = 5;
+            const rayMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
+
+            for(let i = 0; i < rayCount; i++) {
+                const y = (i - 2) * 1.2;
+                const points = [];
+                // Incident ray
+                points.push(new THREE.Vector3(-15, y, 0));
+                points.push(new THREE.Vector3(0, y, 0));
+                
+                // Refracted ray
+                // For a lens: tan(theta) = y / f
+                const targetX = 15;
+                const targetY = y - (y / f) * targetX;
+                points.push(new THREE.Vector3(targetX, targetY, 0));
+
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                rays.add(new THREE.Line(geo, rayMat));
+            }
+        }
+
+        function narrate() {
+            window.speechSynthesis.cancel();
+            const text = currentType === 'convex' ? 
+                "The convex lens is a converging lens. When parallel rays enter, they bend inward and meet at a single point called the principal focus. This is why you can use it to start a fire with sunlight." :
+                "The concave lens is a diverging lens. It is thinner in the middle, causing parallel rays to spread away from each other. If you trace these rays backward, they seem to meet at a virtual focus behind the lens.";
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            drawRays();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

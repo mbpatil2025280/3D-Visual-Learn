@@ -1,0 +1,21 @@
+{
+  "name": "3D Visual Learn App",
+  "short_name": "VisualLearn",
+  "description": "Premium 3D visual learning for your academic standard.",
+  "start_url": "./welcome.html",
+  "display": "standalone",
+  "background_color": "#050a18",
+  "theme_color": "#00f2fe",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3750/3750044.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3750/3750044.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>3D Solar System with Planet Names</title>
+<style>
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
+#panel{
+  position:absolute; top:10px; left:10px;
+  background:rgba(0,0,0,0.7);
+  color:white; padding:15px; border-radius:10px; width:260px;
+}
+button{
+  padding:8px 12px; margin-top:10px; border:none;
+  border-radius:5px; background:#ffeb3b; font-weight:bold; cursor:pointer;
+}
+.label{
+  position:absolute;
+  color:white;
+  font-size:12px;
+  pointer-events:none;
+}
+</style>
+</head>
+<body>
+
+<div id="panel">
+<h3>🌍 Solar System 3D</h3>
+<p id="text">Planets revolve around the Sun in fixed orbits.</p>
+<button onclick="speakText()">🔊 Play Voice</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Light
+const light = new THREE.PointLight(0xffffff, 2, 300);
+scene.add(light);
+
+// Sun
+const sun = new THREE.Mesh(
+  new THREE.SphereGeometry(4,32,32),
+  new THREE.MeshBasicMaterial({color:0xffff00})
+);
+scene.add(sun);
+
+// Label function
+function createLabel(name){
+  const div = document.createElement("div");
+  div.className = "label";
+  div.textContent = name;
+  document.body.appendChild(div);
+  return div;
+}
+
+// Create planet
+function createPlanet(name,size,color,distance,speed){
+  const mesh = new THREE.Mesh(
+    new THREE.SphereGeometry(size,32,32),
+    new THREE.MeshStandardMaterial({color:color})
+  );
+  const orbit = new THREE.Object3D();
+  scene.add(orbit);
+  orbit.add(mesh);
+  mesh.position.x = distance;
+
+  const label = createLabel(name);
+
+  return {mesh,orbit,speed,label};
+}
+
+// Planets with labels
+const mercury = createPlanet("Mercury",0.5,0xaaaaaa,7,0.04);
+const venus   = createPlanet("Venus",0.9,0xffa500,10,0.03);
+const earth   = createPlanet("Earth",1,0x0000ff,14,0.02);
+const mars    = createPlanet("Mars",0.8,0xff0000,18,0.018);
+const jupiter = createPlanet("Jupiter",2,0xffcc99,24,0.01);
+const saturn  = createPlanet("Saturn",1.7,0xffd27f,30,0.008);
+const uranus  = createPlanet("Uranus",1.3,0x66ffff,36,0.006);
+const neptune = createPlanet("Neptune",1.2,0x3333ff,42,0.005);
+
+camera.position.z = 60;
+
+// Update label position
+function updateLabel(planet){
+  const vector = planet.mesh.position.clone();
+  planet.orbit.localToWorld(vector);
+  vector.project(camera);
+
+  const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+  const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+
+  planet.label.style.left = x + "px";
+  planet.label.style.top = y + "px";
+}
+
+// Animation
+function animate(){
+  requestAnimationFrame(animate);
+
+  mercury.orbit.rotation.y += mercury.speed;
+  venus.orbit.rotation.y += venus.speed;
+  earth.orbit.rotation.y += earth.speed;
+  mars.orbit.rotation.y += mars.speed;
+  jupiter.orbit.rotation.y += jupiter.speed;
+  saturn.orbit.rotation.y += saturn.speed;
+  uranus.orbit.rotation.y += uranus.speed;
+  neptune.orbit.rotation.y += neptune.speed;
+  sun.rotation.y += 0.003;
+
+  updateLabel(mercury);
+  updateLabel(venus);
+  updateLabel(earth);
+  updateLabel(mars);
+  updateLabel(jupiter);
+  updateLabel(saturn);
+  updateLabel(uranus);
+  updateLabel(neptune);
+
+  renderer.render(scene,camera);
+}
+animate();
+
+// Voice narration
+function speakText(){
+  const msg = new SpeechSynthesisUtterance(
+    "Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus and Neptune revolve around the Sun. These planets together form the Solar System."
+  );
+  speechSynthesis.speak(msg);
+}
+
+// Responsive
+window.addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+
+</body>
+</html>

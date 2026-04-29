@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6th Standard – General Science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent: #00f2fe;
+    --accent2: #4facfe;
+    --glass: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: radial-gradient(circle at top left, #0f172a, #020617);
+    min-height: 100vh;
+    color: #e6f2f7;
+    padding: 40px 20px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 50px;
+    animation: fadeDown 0.7s ease;
+  }
+  header .breadcrumb {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  header .breadcrumb a { color: var(--accent); text-decoration: none; }
+  header h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    background: linear-gradient(to right, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 15px rgba(0,242,254,0.4));
+  }
+  header p { color: rgba(255,255,255,0.5); margin-top: 8px; font-size: 1rem; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 30px;
+    text-decoration: none;
+    color: #e6f2f7;
+    backdrop-filter: blur(12px);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease both;
+  }
+  .card:nth-child(1) { animation-delay: 0.05s; }
+  .card:nth-child(2) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.15s; }
+  .card:nth-child(4) { animation-delay: 0.2s; }
+  .card:nth-child(5) { animation-delay: 0.25s; }
+  .card:nth-child(6) { animation-delay: 0.3s; }
+  .card:nth-child(7) { animation-delay: 0.35s; }
+  .card:nth-child(8) { animation-delay: 0.4s; }
+  .card:nth-child(9) { animation-delay: 0.45s; }
+  .card:nth-child(10) { animation-delay: 0.5s; }
+  .card:nth-child(11) { animation-delay: 0.55s; }
+  .card:nth-child(12) { animation-delay: 0.6s; }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,242,254,0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .card:hover::before { opacity: 1; }
+
+  .card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(0,242,254,0.15);
+  }
+
+  .card .icon {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .card h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+  .card p {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.45);
+  }
+  .card .badge {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 50px;
+    background: rgba(0,242,254,0.1);
+    border: 1px solid rgba(0,242,254,0.3);
+    color: var(--accent);
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="breadcrumb">
+    <a href="../../dashboard.html">Dashboard</a> › 
+    <a href="../index.html">6th Standard</a> › 
+    General Science
+  </div>
+  <h1>🔬 General Science</h1>
+  <p>Class 6 · 13 Lessons</p>
+</header>
+
+<div class="grid">
+  <a class="card" href=". Sound .html">
+    <span class="icon">🔊</span>
+    <h3>Sound</h3>
+    <p>Introduction to sound, vibrations and how we hear.</p>
+    <span class="badge">Lesson 1</span>
+  </a>
+  <a class="card" href="Disaster Management.html">
+    <span class="icon">⛑️</span>
+    <h3>Disaster Management</h3>
+    <p>Types of disasters and safety measures.</p>
+    <span class="badge">Lesson 2</span>
+  </a>
+  <a class="card" href="Diversity in Living Things and their Classification.html">
+    <span class="icon">🌿</span>
+    <h3>Diversity in Living Things</h3>
+    <p>Classification of plants and animals.</p>
+    <span class="badge">Lesson 3</span>
+  </a>
+  <a class="card" href="Force and Types of Forc.html">
+    <span class="icon">💪</span>
+    <h3>Force and Types of Force</h3>
+    <p>Contact and non-contact forces.</p>
+    <span class="badge">Lesson 4</span>
+  </a>
+  <a class="card" href="Light and the Formation of Shadows .html">
+    <span class="icon">💡</span>
+    <h3>Light and Shadows</h3>
+    <p>How light travels and shadows are formed.</p>
+    <span class="badge">Lesson 5</span>
+  </a>
+  <a class="card" href="Motion and Types of Motion .html">
+    <span class="icon">🔄</span>
+    <h3>Motion and Types of Motion</h3>
+    <p>Linear, circular, and oscillatory motion.</p>
+    <span class="badge">Lesson 6</span>
+  </a>
+  <a class="card" href="Natural Resources – Air, Water and Land.html">
+    <span class="icon">🌍</span>
+    <h3>Natural Resources</h3>
+    <p>Air, water and land as natural resources.</p>
+    <span class="badge">Lesson 7</span>
+  </a>
+  <a class="card" href="Nutrition and Diet.html">
+    <span class="icon">🥗</span>
+    <h3>Nutrition and Diet</h3>
+    <p>Food components, balanced diet and health.</p>
+    <span class="badge">Lesson 8</span>
+  </a>
+  <a class="card" href="Our Skeletal System and the Skin.html">
+    <span class="icon">🦴</span>
+    <h3>Skeletal System &amp; Skin</h3>
+    <p>Bones, joints, muscles and our skin.</p>
+    <span class="badge">Lesson 9</span>
+  </a>
+  <a class="card" href="Substances in Daily Use.html">
+    <span class="icon">🧴</span>
+    <h3>Substances in Daily Use</h3>
+    <p>Materials and substances we use every day.</p>
+    <span class="badge">Lesson 10</span>
+  </a>
+  <a class="card" href="Substances in the Surroundings–Their States and Propertie.html">
+    <span class="icon">🧪</span>
+    <h3>Substances &amp; Their States</h3>
+    <p>Solid, liquid, gas and their properties.</p>
+    <span class="badge">Lesson 11</span>
+  </a>
+  <a class="card" href="The Living World.html">
+    <span class="icon">🌱</span>
+    <h3>The Living World</h3>
+    <p>Characteristics of living things.</p>
+    <span class="badge">Lesson 12</span>
+  </a>
+  <a class="card" href="The Universe.html">
+    <span class="icon">🌌</span>
+    <h3>The Universe</h3>
+    <p>Stars, planets and our solar system.</p>
+    <span class="badge">Lesson 13</span>
+  </a>
+</div>
+
+</body>
+</html>

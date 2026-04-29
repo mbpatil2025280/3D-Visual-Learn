@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doppler Effect Lab</title>
+    <style>
+        body { margin: 0; background: #0a0a0a; color: #00ffcc; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        canvas { border: 2px solid #333; border-radius: 10px; background: #000; cursor: pointer; }
+        .info { text-align: center; max-width: 600px; margin-bottom: 20px; }
+        button { background: #00ffcc; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; margin: 10px; }
+        button:hover { background: #00ccaa; }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>Doppler Effect Simulator</h1>
+        <p>Watch how waves compress in front of the source and stretch behind it.</p>
+        <button onclick="playDopplerSound()">🔊 Hear the Shift</button>
+    </div>
+    <canvas id="dopplerCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('dopplerCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 400;
+
+    let waves = [];
+    let sourceX = 100;
+    let sourceSpeed = 2;
+    let frame = 0;
+
+    function playDopplerSound() {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const utterance = new SpeechSynthesisUtterance("As the source moves toward the observer, waves compress, creating a higher pitch. As it moves away, they stretch, creating a lower pitch.");
+        window.speechSynthesis.speak(utterance);
+        
+        // Simulating the sound shift
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime); // High pitch approaching
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 3); // Low pitch receding
+        
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 3);
+    }
+
+    function draw() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Emit new wave every 20 frames
+        if (frame % 20 === 0) {
+            waves.push({ x: sourceX, y: 200, r: 0 });
+        }
+
+        waves.forEach((w, i) => {
+            ctx.beginPath();
+            ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(0, 255, 204, ${1 - w.r/400})`;
+            ctx.stroke();
+            w.r += 2; // Wave propagation speed
+            if (w.r > 400) waves.splice(i, 1);
+        });
+
+        // Draw Source
+        ctx.fillStyle = "#ff0055";
+        ctx.beginPath();
+        ctx.arc(sourceX, 200, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        sourceX += sourceSpeed;
+        if (sourceX > canvas.width) sourceX = 0;
+        frame++;
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>

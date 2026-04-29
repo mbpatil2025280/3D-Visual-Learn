@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | 3D Visual Learning</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00f2fe">
+  <style>
+    /* Slight overrides for the new admin structure if needed */
+    body {
+      display: block;
+      /* Remove global flex center from body just for dashboard */
+      text-align: left;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="admin-layout">
+
+    <!-- WordPress-like Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">🎓 3D Visual Learn</div>
+
+      <a href="#" class="active">
+        <span>📊</span> Dashboard
+      </a>
+      <a href="#">
+        <span>📚</span> My Courses
+      </a>
+      <a href="#">
+        <span>💳</span> Transactions
+      </a>
+      <a href="#">
+        <span>⚙️</span> Settings
+      </a>
+      <a href="#">
+        <span>👤</span> Profile
+      </a>
+      <a href="index.html" style="margin-top: auto; color: #ff4757;">
+        <span>🚪</span> Log Out
+      </a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <div class="main-header">
+        <div>
+          <h1>Welcome back, Student!</h1>
+          <p style="color: #94a3b8; font-size: 1.1rem; margin-top: 5px;">Select a curriculum standard below to subscribe
+            to our interactive 3D learning modules.</p>
+        </div>
+      </div>
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <div class="welcome-banner-inner">
+          <div class="welcome-text-block">
+            <h2 class="welcome-title">🌐 Welcome to 3D Visual Learn!</h2>
+            <p class="welcome-desc">This interactive platform helps students understand concepts through immersive 3D animations and visual storytelling. Instead of just reading theory, learners can see real-world simulations, making complex topics <strong>easier and faster to grasp.</strong></p>
+          </div>
+          <div class="welcome-features">
+            <div class="feature-item">
+              <span class="feature-icon">🎮</span>
+              <div>
+                <div class="feature-title">3D Animated Lessons</div>
+                <div class="feature-desc">Immersive 3D visuals for every topic</div>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🕹️</span>
+              <div>
+                <div class="feature-title">Interactive Controls</div>
+                <div class="feature-desc">Engage and explore at your own pace</div>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">💡</span>
+              <div>
+                <div class="feature-title">Visual Explanations</div>
+                <div class="feature-desc">Concepts explained through simulation</div>
+              </div>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">🚀</span>
+              <div>
+                <div class="feature-title">Engaging Experience</div>
+                <div class="feature-desc">Learn smarter, not harder</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="welcome-footer">Explore, interact, and learn smarter with <strong style="color: var(--accent-primary);">3D Visual Learn!</strong> 🌟</p>
+      </div>
+
+      <!-- Pricing Grid -->
+      <div class="grid" style="padding: 0; max-width: 100%;">
+
+        <!-- 5th Standard -->
+        <a href="purchase.php?course=5th_standard">
+          <div class="icon-wrapper">📘</div>
+          <div class="card-title">5th Standard</div>
+          <div class="card-subtitle">Foundational Science</div>
+          <div class="price-tag">₹ 299 <span class="price-sub">/ year</span></div>
+          <div class="subscribe-btn">Subscribe</div>
+        </a>
+
+        <!-- 6th Standard -->
+        <a href="purchase.php?course=6th_standard">
+          <div class="icon-wrapper">📗</div>
+          <div class="card-title">6th Standard</div>
+          <div class="card-subtitle">General Science</div>
+          <div class="price-tag">₹ 399 <span class="price-sub">/ year</span></div>
+          <div class="subscribe-btn">Subscribe</div>
+        </a>
+
+        <!-- 7th Standard -->
+        <a href="purchase.php?course=7th_standard">
+          <div class="icon-wrapper">📙</div>
+          <div class="card-title">7th Standard</div>
+          <div class="card-subtitle">Advanced Basics</div>
+          <div class="price-tag">₹ 499 <span class="price-sub">/ year</span></div>
+          <div class="subscribe-btn">Subscribe</div>
+        </a>
+
+        <!-- 8th Standard -->
+        <a href="purchase.php?course=8th_standard">
+          <div class="icon-wrapper">📕</div>
+          <div class="card-title">8th Standard</div>
+          <div class="card-subtitle">Fundamental Logic</div>
+          <div class="price-tag">₹ 599 <span class="price-sub">/ year</span></div>
+          <div class="subscribe-btn">Subscribe</div>
+        </a>
+
+        <!-- 9th Standard -->
+        <a href="purchase.php?course=9th_standard">
+          <div class="icon-wrapper">📘</div>
+          <div class="card-title">9th Standard</div>
+          <div class="card-subtitle">Pre-Secondary School</div>
+          <div class="price-tag">₹ 799 <span class="price-sub">/ year</span></div>
+          <div class="subscribe-btn">Subscribe</div>
+        </a>
+
+        <!-- 10th Standard -->
+        <a href="purchase.php?course=10th_standard">
+          <div class="icon-wrapper">📗</div>
+          <div class="card-title">10th Standard</div>
+          <div class="card-subtitle">Secondary Board</div>
+          <div class="price-tag">₹ 999 <span class="price-sub">/ year</span></div>
+          <div class="subscribe-btn">Subscribe</div>
+        </a>
+
+        <!-- 11th Standard -->
+        <a href="purchase.php?course=11th_standard">
+          <div class="icon-wrapper">📙</div>
+          <div class="card-title">11th Standard</div>
+          <div class="card-subtitle">Higher Secondary I</div>
+          <div class="price-tag">₹ 1,199 <span class="price-sub">/ year</span></div>
+          <button class="subscribe-btn">Subscribe</button>
+        </a>
+
+        <!-- 12th Standard -->
+        <a href="purchase.php?course=12th_standard">
+          <div class="icon-wrapper">📕</div>
+          <div class="card-title">12th Standard</div>
+          <div class="card-subtitle">Higher Secondary II</div>
+          <div class="price-tag">₹ 1,499 <span class="price-sub">/ year</span></div>
+          <button class="subscribe-btn">Subscribe</button>
+        </a>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+</body>
+
+</html>
